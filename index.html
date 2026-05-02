@@ -217,36 +217,6 @@
                     </button>
                 </div>
 
-                <!-- NOVO BLOCO: CONFIGURAÇÃO DA RONDA -->
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 no-print transition-colors">
-                    <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-location-dot text-alblue dark:text-blue-400 mr-2"></i> Configuração da Ronda</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="select-unidade" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Unidade</label>
-                            <select id="select-unidade" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-alblue transition-colors">
-                                <option value="" disabled selected>Selecione a Unidade...</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Setores Visitados</label>
-                            <div id="check-setores" class="grid grid-cols-2 sm:grid-cols-3 gap-2 grid-setores">
-                                <!-- Preenchido dinamicamente pelo JS -->
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="nome-inspetor" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nome do Inspetor</label>
-                            <input type="text" id="nome-inspetor" placeholder="Nome do Inspetor" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-alblue transition-colors">
-                        </div>
-
-                        <button id="btn-iniciar-ronda" class="w-full bg-alblue hover:bg-alblue_light dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 mt-2">
-                            <i class="fa-solid fa-play"></i> Salvar Configuração e Iniciar Ronda
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Estatísticas Simples -->
                 <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-chart-simple text-alblue dark:text-blue-400 mr-2"></i> Indicadores da Ronda</h2>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -334,6 +304,36 @@
             <section id="aba-checklist" class="hidden fade-enter">
                 
                 <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2 hidden pdf-mode-title"><i class="fa-solid fa-list-check text-alblue dark:text-blue-400 mr-2"></i> Detalhamento da Ronda</h2>
+
+                <!-- NOVO BLOCO: CONFIGURAÇÃO DA RONDA (MOVIDO E ATUALIZADO) -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 no-print transition-colors">
+                    <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-location-dot text-alblue dark:text-blue-400 mr-2"></i> Configuração da Ronda</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Unidades / Filiais</label>
+                            <div id="check-unidades" class="grid grid-cols-2 sm:grid-cols-3 gap-2 grid-setores">
+                                <!-- Preenchido dinamicamente pelo JS -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Áreas Vistoriadas</label>
+                            <div id="check-setores" class="grid grid-cols-2 sm:grid-cols-3 gap-2 grid-setores">
+                                <!-- Preenchido dinamicamente pelo JS -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="nome-inspetor" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nome do Inspetor</label>
+                            <input type="text" id="nome-inspetor" placeholder="Nome do Inspetor" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-alblue transition-colors">
+                        </div>
+
+                        <button id="btn-iniciar-ronda" class="w-full bg-alblue hover:bg-alblue_light dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 mt-2">
+                            <i class="fa-solid fa-play"></i> Salvar Configuração e Iniciar Ronda
+                        </button>
+                    </div>
+                </div>
 
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-alyellow rounded-r-lg shadow-sm mb-6 overflow-hidden transition-colors page-break-inside-avoid">
                     <div class="p-4">
@@ -439,18 +439,21 @@
             unidades: [
                 "Ferragens", 
                 "Sistemas", 
-                "Matriz Alumínio", 
-                "Filial Alumínio"
+                "Filial Alumínio",
+                "Matriz Alumínio"
             ],
-            setores: {
+            areas_vistoriadas: {
                 administrativos: [
                     "Compras", "Financeiro", "Fiscal", "Marketing", 
-                    "PCP", "RH", "SST", "Vendas", "Qualidade"
+                    "PCP", "RH", "SST", "Vendas", "Qualidade",
+                    "Recepção e portaria"
                 ],
                 operacionais: [
                     "Devolução/Recebimento", "Expedição", "Logística", 
                     "Injetora", "Montagem", "Pintura", "Puxadores", 
-                    "Maxsystem", "Manutenção"
+                    "Maxsystem", "Manutenção",
+                    "Vestiário masculino", "Docas de carga e descarga", 
+                    "Área de armazenamento de produtos químicos", "Estacionamentos"
                 ]
             },
             categorias_inspecao: [
@@ -627,8 +630,8 @@
             dataRonda: null,
             inspetor: "",
             focoCritico: "",
-            unidade: "",
-            setoresSelecionados: [],
+            unidadesSelecionadas: [],
+            areasSelecionadas: [],
             respostas: {},
             obsAreas: {}
         };
@@ -648,13 +651,13 @@
             });
         }
 
-        function initNewReport(unidade, setoresArray) {
-            estadoAtualRonda.unidade = unidade;
-            estadoAtualRonda.setoresSelecionados = setoresArray;
+        function initNewReport(unidadesArray, areasArray) {
+            estadoAtualRonda.unidadesSelecionadas = unidadesArray;
+            estadoAtualRonda.areasSelecionadas = areasArray;
             estadoAtualRonda.dataRonda = new Date().toISOString();
             
             salvarProgresso();
-            mostrarToast(`Nova vistoria iniciada em: ${unidade}`);
+            mostrarToast(`Nova vistoria iniciada.`);
         }
 
         function bootApp() {
@@ -727,9 +730,9 @@
                 estadoAtualRonda.focoCritico = progressoLocal.focoCritico || "";
                 estadoAtualRonda.dataRonda = progressoLocal.dataRonda || new Date().toISOString();
                 
-                // Mapeamento dos novos campos relacionais
-                estadoAtualRonda.unidade = progressoLocal.unidade || "";
-                estadoAtualRonda.setoresSelecionados = progressoLocal.setoresSelecionados || [];
+                // Mapeamento dos novos campos relacionais de múltipla escolha
+                estadoAtualRonda.unidadesSelecionadas = progressoLocal.unidadesSelecionadas || [];
+                estadoAtualRonda.areasSelecionadas = progressoLocal.areasSelecionadas || [];
             } else {
                 estadoAtualRonda.dataRonda = new Date().toISOString();
             }
@@ -762,35 +765,38 @@
             document.getElementById('editor-json').value = JSON.stringify(moldeAtual, null, 4);
         }
 
-        // NOVO: Renderiza as opções da tela de Setup baseado no JSON
+        // NOVO: Renderiza as opções da tela de Setup baseado no JSON (Múltipla Escolha)
         function renderSetupRonda() {
-            const selectUnidade = document.getElementById('select-unidade');
+            const divUnidades = document.getElementById('check-unidades');
             const divSetores = document.getElementById('check-setores');
             
-            if (!selectUnidade || !divSetores) return;
+            if (!divUnidades || !divSetores) return;
 
-            // 1. Preenche Unidades
-            selectUnidade.innerHTML = '<option value="" disabled selected>Selecione a Unidade...</option>';
+            // 1. Preenche Unidades dinamicamente com Checkboxes
+            let htmlUnidades = '';
             mockJsonConfig.unidades.forEach(uni => {
-                const opt = document.createElement('option');
-                opt.value = uni;
-                opt.innerText = uni;
-                selectUnidade.appendChild(opt);
+                const isChecked = (estadoAtualRonda.unidadesSelecionadas && estadoAtualRonda.unidadesSelecionadas.includes(uni)) ? 'checked' : '';
+                htmlUnidades += `
+                    <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <input type="checkbox" value="${uni}" class="chk-unidade w-4 h-4 text-alblue rounded border-slate-300 focus:ring-alblue" ${isChecked}>
+                        <span class="truncate">${uni}</span>
+                    </label>
+                `;
             });
-            if (estadoAtualRonda.unidade) selectUnidade.value = estadoAtualRonda.unidade;
+            divUnidades.innerHTML = htmlUnidades;
 
-            // 2. Preenche Setores dinamicamente (Unindo ADM e OP do mockJsonConfig)
+            // 2. Preenche Áreas Vistoriadas dinamicamente
             let htmlSetores = '';
-            const todosSetores = [...mockJsonConfig.setores.administrativos, ...mockJsonConfig.setores.operacionais].sort();
+            const todasAreas = [...mockJsonConfig.areas_vistoriadas.administrativos, ...mockJsonConfig.areas_vistoriadas.operacionais].sort();
             
-            todosSetores.forEach(setor => {
+            todasAreas.forEach(area => {
                 // Checa se já estava salvo na memória
-                const isChecked = (estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.includes(setor)) ? 'checked' : '';
+                const isChecked = (estadoAtualRonda.areasSelecionadas && estadoAtualRonda.areasSelecionadas.includes(area)) ? 'checked' : '';
                 
                 htmlSetores += `
                     <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                        <input type="checkbox" value="${setor}" class="chk-setor w-4 h-4 text-alblue rounded border-slate-300 focus:ring-alblue" ${isChecked}>
-                        <span class="truncate">${setor}</span>
+                        <input type="checkbox" value="${area}" class="chk-setor w-4 h-4 text-alblue rounded border-slate-300 focus:ring-alblue" ${isChecked}>
+                        <span class="truncate">${area}</span>
                     </label>
                 `;
             });
@@ -799,31 +805,33 @@
 
         // NOVO: Valida e Salva os dados do Setup, direcionando para a vistoria
         function iniciarRonda() {
-            const unidade = document.getElementById('select-unidade').value;
             const inspetor = document.getElementById('nome-inspetor').value;
             
-            // Pega todos os checkboxes marcados
-            const checkboxes = document.querySelectorAll('.chk-setor:checked');
-            const setores = Array.from(checkboxes).map(chk => chk.value);
+            // Pega todos os checkboxes marcados (Unidades e Áreas)
+            const chkUnidades = document.querySelectorAll('.chk-unidade:checked');
+            const unidades = Array.from(chkUnidades).map(chk => chk.value);
+            
+            const chkSetores = document.querySelectorAll('.chk-setor:checked');
+            const areas = Array.from(chkSetores).map(chk => chk.value);
 
             // Validações Básicas
-            if (!unidade) {
-                alert("Por favor, selecione uma Unidade antes de iniciar.");
+            if (unidades.length === 0) {
+                alert("Por favor, selecione pelo menos uma Filial/Unidade.");
+                return;
+            }
+            if (areas.length === 0) {
+                alert("Por favor, selecione pelo menos uma Área Vistoriada.");
                 return;
             }
             if (!inspetor || inspetor.trim() === "") {
                 alert("Por favor, informe o Nome do Inspetor.");
                 return;
             }
-            if (setores.length === 0) {
-                alert("Por favor, selecione pelo menos um Setor Visitado.");
-                return;
-            }
 
             // Atualiza o estado global
-            estadoAtualRonda.unidade = unidade;
+            estadoAtualRonda.unidadesSelecionadas = unidades;
+            estadoAtualRonda.areasSelecionadas = areas;
             estadoAtualRonda.inspetor = inspetor.trim();
-            estadoAtualRonda.setoresSelecionados = setores;
             
             // Sincroniza o cabeçalho superior pequeno
             document.getElementById('input-inspetor').value = estadoAtualRonda.inspetor;
@@ -1296,7 +1304,7 @@
                 container.className = 'mt-8 mb-6 page-break-inside-avoid transition-colors';
                 
                 // Insere logo após os gráficos no Dashboard
-                const divGraficos = document.querySelector('#aba-dashboard .grid.grid-cols-1.md\\:grid-cols-2');
+                const divGraficos = document.querySelector('#aba-dashboard .grid.grid-cols-1.lg\\:grid-cols-3');
                 if (divGraficos) divGraficos.after(container);
                 else return; 
             }
@@ -1479,10 +1487,13 @@
             const inspetor = estadoAtualRonda.inspetor || "Inspetor SESMT";
             const dataObj = new Date();
             const dataStr = `${("0"+dataObj.getDate()).slice(-2)}/${("0"+(dataObj.getMonth()+1)).slice(-2)}/${dataObj.getFullYear()}`;
-            const unidade = estadoAtualRonda.unidade || "Não informada";
-            const setores = estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.length > 0 
-                            ? estadoAtualRonda.setoresSelecionados.join(", ") 
-                            : "Não informados";
+            
+            const unidadesStr = estadoAtualRonda.unidadesSelecionadas && estadoAtualRonda.unidadesSelecionadas.length > 0 
+                            ? estadoAtualRonda.unidadesSelecionadas.join(", ") 
+                            : "Não informadas";
+            const areasStr = estadoAtualRonda.areasSelecionadas && estadoAtualRonda.areasSelecionadas.length > 0 
+                            ? estadoAtualRonda.areasSelecionadas.join(", ") 
+                            : "Não informadas";
 
             let html = `
                 <div class="text-center mb-8 border-b-2 border-slate-800 dark:border-slate-500 pb-4">
@@ -1490,9 +1501,9 @@
                     <p class="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">AL Indústria - SESMT</p>
                 </div>
                 <div class="mb-6 text-sm text-slate-700 dark:text-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded border border-slate-200 dark:border-slate-700">
-                    <div><b>Unidade:</b> ${unidade}</div>
+                    <div><b>Filiais Vistoriadas:</b> ${unidadesStr}</div>
                     <div><b>Data:</b> ${dataStr}</div>
-                    <div class="sm:col-span-2"><b>Setores Visitados:</b> ${setores}</div>
+                    <div class="sm:col-span-2"><b>Áreas Vistoriadas:</b> ${areasStr}</div>
                     <div class="sm:col-span-2"><b>Inspetor:</b> ${inspetor}</div>
                 </div>
             `;
@@ -1687,12 +1698,15 @@
             const inspetor = estadoAtualRonda.inspetor || "Inspetor SESMT";
             const dataObj = new Date();
             const dataStr = `${("0"+dataObj.getDate()).slice(-2)}/${("0"+(dataObj.getMonth()+1)).slice(-2)}/${dataObj.getFullYear()}`;
-            const unidade = estadoAtualRonda.unidade || "Não informada";
-            const setores = estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.length > 0 
-                            ? estadoAtualRonda.setoresSelecionados.join(", ") 
-                            : "Não informados";
             
-            let texto = `*RESUMO DA RONDA SESMT*\nUnidade: ${unidade}\nData: ${dataStr}\nSetores Visitados: ${setores}\nInspetor: ${inspetor}\n\n`;
+            const unidadesStr = estadoAtualRonda.unidadesSelecionadas && estadoAtualRonda.unidadesSelecionadas.length > 0 
+                            ? estadoAtualRonda.unidadesSelecionadas.join(", ") 
+                            : "Não informadas";
+            const areasStr = estadoAtualRonda.areasSelecionadas && estadoAtualRonda.areasSelecionadas.length > 0 
+                            ? estadoAtualRonda.areasSelecionadas.join(", ") 
+                            : "Não informadas";
+            
+            let texto = `*RESUMO DA RONDA SESMT*\nFiliais Vistoriadas: ${unidadesStr}\nData: ${dataStr}\nÁreas Vistoriadas: ${areasStr}\nInspetor: ${inspetor}\n\n`;
             
             if(estadoAtualRonda.focoCritico) {
                 texto += `*🎯 FOCO DO DIA:* ${estadoAtualRonda.focoCritico}\n\n`;
