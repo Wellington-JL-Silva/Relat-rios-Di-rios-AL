@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SGI Vistoria - AL Indústria</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js para os Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- html2pdf.js para Exportação do Relatório -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class', 
+            theme: {
+                extend: {
+                    colors: {
+                        alblue: '#003366',
+                        alyellow: '#FFCC00',
+                        alblue_light: '#004c99',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        
+        /* Transições das Sanfonas */
+        .accordion-content {
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .accordion-content.open {
+            max-height: 3000px;
+            opacity: 1;
+        }
+
+        /* Transições da Área de Foto e Obs */
+        .photo-obs-area {
+            transition: all 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            margin-top: 0;
+        }
+        .photo-obs-area.open {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 0.75rem;
+        }
+
+        input[type="file"] { display: none; }
+
+        .fade-enter { animation: fadeIn 0.3s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* =======================================================
+           ALTO CONTRASTE PARA LEITURA (MODO CLARO)
+           ======================================================= */
+        body:not(.dark) .text-slate-400,
+        body:not(.dark) .text-slate-500 { color: #333333 !important; font-weight: 600; }
+        body:not(.dark) .text-slate-600 { color: #222222 !important; font-weight: 600; }
+        body:not(.dark) .text-slate-700, 
+        body:not(.dark) .text-slate-800 { color: #111111 !important; font-weight: 700; }
+        body:not(.dark) textarea { color: #111111 !important; font-weight: 600; }
+
+        /* =======================================================
+           ESTILOS MÁGICOS PARA A EXPORTAÇÃO EM PDF 
+           ======================================================= */
+        .pdf-mode { background: #ffffff !important; color: #000000 !important; }
+        .pdf-mode #aba-dashboard, .pdf-mode #aba-checklist { display: block !important; opacity: 1 !important; visibility: visible !important; }
+        .pdf-mode #aba-config, .pdf-mode nav, .pdf-mode header button, .pdf-mode .no-print { display: none !important; }
+        .pdf-mode #aba-dashboard { page-break-after: always; margin-bottom: 2rem; }
+        /* Força a abertura de TODAS as sanfonas no PDF para mostrar tudo */
+        .pdf-mode .accordion-content { max-height: none !important; opacity: 1 !important; display: block !important; padding-bottom: 1rem; }
+        /* Evitar cortes a meio da página */
+        .pdf-mode .page-break-inside-avoid { page-break-inside: avoid !important; break-inside: avoid !important; }
+        /* Tira bordas extras de botões inativos e força cores claras */
+        .pdf-mode .bg-slate-800, .pdf-mode .dark\:bg-slate-800 { background: #ffffff !important; border-color: #e2e8f0 !important; }
+        
+        /* FORÇA O PRETO ABSOLUTO NOS TEXTOS PARA O PDF E IMPRESSÃO */
+        .pdf-mode .text-slate-200, .pdf-mode .dark\:text-slate-200,
+        .pdf-mode .text-slate-400, .pdf-mode .text-slate-500,
+        .pdf-mode .text-slate-600, .pdf-mode .text-slate-700, 
+        .pdf-mode .text-slate-800 { 
+            color: #000000 !important; 
+            font-weight: bold !important; 
+        }
+        .pdf-mode textarea { 
+            background: #f8fafc !important; 
+            color: #000000 !important; 
+            border: 1px solid #cbd5e1 !important; 
+            font-weight: bold !important; 
+        }
+
+        @media print {
+            * { color: #000000 !important; }
+            textarea { color: #000000 !important; font-weight: bold !important; }
+        }
+        
+        /* Controlo de visibilidade exclusivo do PDF */
+        .pdf-mode-signature { display: none; }
+        .pdf-mode .pdf-mode-signature { display: block !important; }
+        .pdf-mode-title { display: none; }
+        .pdf-mode .pdf-mode-title { display: block !important; }
+        .pdf-mode .pdf-hide-empty-obs { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans flex flex-col h-screen overflow-hidden transition-colors duration-300">
+
+    <!-- CABEÇALHO -->
+    <header class="bg-alblue text-white shadow-md z-20 shrink-0 transition-colors duration-300">
+        <div class="max-w-4xl mx-auto px-4 py-3 border-b-4 border-alyellow flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-shield-halved text-2xl text-alyellow"></i>
+                <div class="leading-tight">
+                    <h1 class="text-xl font-bold tracking-wide">Segurança do Trabalho</h1>
+                    <p class="text-[10px] text-slate-300 font-semibold tracking-widest uppercase">AL Indústria</p>
+                </div>
+            </div>
+            <div class="text-right flex items-center justify-end gap-2 flex-wrap">
+                <input type="text" id="input-inspetor" placeholder="Nome do Inspetor" class="bg-alblue_light text-white text-xs font-bold px-2 py-1 rounded border border-blue-800 focus:outline-none focus:border-alyellow text-right w-24 sm:w-32 placeholder-blue-300" onchange="salvarMetadados()">
+                
+                <!-- BOTÃO MODO ESCURO -->
+                <button onclick="toggleDarkMode()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold w-8 h-8 rounded transition-colors shadow flex items-center justify-center">
+                    <i id="icone-tema" class="fa-solid fa-moon"></i>
+                </button>
+
+                <!-- BOTÃO MODO OP -->
+                <button id="btn-modo-op" onclick="toggleModoOp()" class="bg-slate-700 hover:bg-red-600 text-white text-xs font-bold px-2 py-1.5 rounded transition-colors shadow flex items-center gap-1">
+                    <i id="icone-modo-op" class="fa-solid fa-lock"></i> <span class="hidden sm:inline">Modo OP</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVEGAÇÃO DE ABAS -->
+        <nav class="max-w-4xl mx-auto flex px-2 pt-2 gap-1 bg-alblue overflow-x-auto no-scrollbar">
+            <button onclick="mudarAba('dashboard')" id="btn-tab-dashboard" class="flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-slate-100 dark:bg-slate-900 text-alblue dark:text-blue-400 shadow-[0_-2px_5px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                <i class="fa-solid fa-chart-pie"></i> Painel
+            </button>
+            <button onclick="mudarAba('checklist')" id="btn-tab-checklist" class="flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-alblue_light text-slate-300 hover:text-white hover:bg-alblue whitespace-nowrap">
+                <i class="fa-solid fa-list-check"></i> Ronda
+            </button>
+            <button onclick="mudarAba('previa')" id="btn-tab-previa" class="flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-alblue_light text-slate-300 hover:text-white hover:bg-alblue whitespace-nowrap">
+                <i class="fa-solid fa-file-signature"></i> Prévia
+            </button>
+            <button onclick="mudarAba('config')" id="btn-tab-config" class="flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-alblue_light text-slate-300 hover:text-white hover:bg-alblue whitespace-nowrap">
+                <i class="fa-solid fa-code"></i> Motor JSON
+            </button>
+        </nav>
+    </header>
+
+    <!-- ÁREA PRINCIPAL (ID Adicionado para capturar o PDF completo) -->
+    <main class="flex-1 overflow-y-auto w-full relative">
+        <div id="area-principal" class="max-w-4xl mx-auto p-4 pb-24 bg-transparent">
+            
+            <!-- ========================================== -->
+            <!-- ABA 1: DASHBOARD -->
+            <!-- ========================================== -->
+            <section id="aba-dashboard" class="fade-enter">
+                
+                <!-- TÍTULO EXCLUSIVO PARA O PDF (Fica oculto na app) -->
+                <div class="hidden pdf-mode-title text-center mb-8 border-b-2 border-slate-800 pb-4">
+                    <h1 class="text-3xl font-black text-slate-800">Relatório diario de rondas.</h1>
+                    <p class="text-sm text-slate-500 font-bold uppercase tracking-widest mt-1">AL Indústria - SESMT</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 no-print">
+                    <!-- BOTÃO GERAR PDF ATIVADO -->
+                    <button onclick="gerarRelatorioPDF()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-alyellow dark:hover:border-alyellow transition-all flex items-center justify-between group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                <i class="fa-solid fa-file-pdf text-lg"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-slate-700 dark:text-slate-200">Gerar Relatório PDF</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Exportar vistoria com gráficos</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-300 dark:text-slate-600"></i>
+                    </button>
+
+                    <button onclick="gerarResumoEmail()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-green-500 dark:hover:border-green-500 transition-all flex items-center justify-between group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:bg-green-500 group-hover:text-white transition-colors">
+                                <i class="fa-solid fa-share-nodes text-lg"></i>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-bold text-slate-700 dark:text-slate-200">Compartilhar (Resumo)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Copiar texto para WhatsApp</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-300 dark:text-slate-600"></i>
+                    </button>
+                </div>
+
+                <!-- Estatísticas Simples -->
+                <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-chart-simple text-alblue dark:text-blue-400 mr-2"></i> Indicadores da Ronda</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-center transition-colors">
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Progresso</p>
+                        <p class="text-3xl font-black text-alblue dark:text-blue-400 mt-1" id="stat-progresso">0%</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-center transition-colors">
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Conformes</p>
+                        <p class="text-3xl font-black text-green-500 dark:text-green-400 mt-1" id="stat-ok">0</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-center transition-colors">
+                        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">N.C.</p>
+                        <p class="text-3xl font-black text-red-500 dark:text-red-400 mt-1" id="stat-nk">0</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-center flex flex-col justify-center items-center no-print transition-colors">
+                        <button onclick="limparRonda()" class="text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold py-2 px-4 rounded transition text-sm">
+                            <i class="fa-solid fa-trash-can"></i> Limpar Ronda
+                        </button>
+                    </div>
+                </div>
+
+                <!-- GRÁFICOS (CHART.JS) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 page-break-inside-avoid">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors flex flex-col items-center lg:col-span-1">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Status Global da Inspeção</h3>
+                        <div class="relative w-full h-64 flex justify-center">
+                            <canvas id="chartGeral"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors flex flex-col items-center lg:col-span-2">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Ocorrências Críticas (N.C.) por Setor</h3>
+                        <div class="relative w-full h-64 flex justify-center">
+                            <canvas id="chartSetores"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exportador de Molde -->
+                <div class="no-print bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center text-slate-600 dark:text-slate-300 flex flex-col items-center justify-center mt-6 transition-colors">
+                    <i class="fa-solid fa-download text-3xl mb-2 opacity-70"></i>
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Exportar Estrutura do App</h3>
+                    <p class="text-xs mb-4 text-slate-500 dark:text-slate-400">Baixe o molde atual do checklist (JSON) para backup.</p>
+                    <button onclick="baixarMoldeJSON()" class="bg-slate-800 dark:bg-slate-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition">
+                        Exportar Molde .json
+                    </button>
+                </div>
+
+                <!-- ÁREA DISCRETA DE DESBLOQUEIO DE IA -->
+                <div id="area-desbloqueio-op" class="no-print mt-6 text-center">
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-widest font-bold">Acesso Restrito - Integração IA</p>
+                    <div class="flex justify-center gap-2 items-center">
+                        <input type="password" id="senhaOp" placeholder="Senha Administrativa" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-3 py-1.5 rounded text-sm outline-none focus:border-purple-500 dark:text-slate-200 w-48 text-center shadow-sm">
+                        <button onclick="desbloquearModoOP()" class="bg-slate-300 hover:bg-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded text-sm transition-colors shadow-sm">
+                            <i class="fa-solid fa-unlock-keyhole"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MODO OP - AVANÇADO (Integração IA Bi-direcional) -->
+                <div id="area-botoes-op" style="display: none !important;" class="no-print bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 text-center text-purple-800 dark:text-purple-300 flex flex-col items-center justify-center mt-6 transition-colors">
+                    <i class="fa-solid fa-robot text-3xl mb-2 opacity-80"></i>
+                    <h3 class="font-bold text-purple-900 dark:text-purple-200">Modo OP - Avançado (Integração IA)</h3>
+                    <p class="text-xs mb-4 text-purple-700 dark:text-purple-400">Exporte os dados cruos para a IA ou importe um arquivo processado para atualizar a ronda instantaneamente.</p>
+                    
+                    <div class="flex flex-wrap gap-3 justify-center w-full">
+                        <button onclick="exportarRondaJSON()" class="bg-purple-600 dark:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-export"></i> Exportar Ronda
+                        </button>
+                        
+                        <!-- Input Oculto para o Arquivo -->
+                        <input type="file" id="input-import-json" accept=".json" class="hidden" onchange="importarRondaJSON(event)">
+                        
+                        <button onclick="document.getElementById('input-import-json').click()" class="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 border border-purple-300 dark:border-purple-600 font-bold py-2 px-5 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-import"></i> Importar Ronda
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ABA 2: CHECKLIST (RONDA) -->
+            <!-- ========================================== -->
+            <section id="aba-checklist" class="hidden fade-enter">
+                
+                <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2 hidden pdf-mode-title"><i class="fa-solid fa-list-check text-alblue dark:text-blue-400 mr-2"></i> Detalhamento da Ronda</h2>
+
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-alyellow rounded-r-lg shadow-sm mb-6 overflow-hidden transition-colors page-break-inside-avoid">
+                    <div class="p-4">
+                        <label class="flex items-center gap-2 text-yellow-800 dark:text-yellow-400 font-black text-sm uppercase tracking-wider mb-2">
+                            <i class="fa-solid fa-triangle-exclamation text-alyellow text-lg"></i> Foco Crítico do Dia/Semana
+                        </label>
+                        <textarea id="input-foco" onchange="salvarMetadados()" rows="2" placeholder="Ex: Verificar retiradas de inflamáveis, uso de luvas na injetora..." class="w-full bg-white dark:bg-slate-800 border border-yellow-200 dark:border-yellow-700/50 p-3 rounded text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-alyellow transition-all resize-none shadow-inner"></textarea>
+                    </div>
+                </div>
+
+                <!-- CONTAINER DINÂMICO DAS SANFONAS -->
+                <div id="container-sanfonas" class="space-y-4">
+                    <!-- Gerado pelo JS -->
+                </div>
+                
+                <!-- BLOCO DE ASSINATURA (SÓ APARECE NO PDF) -->
+                <div class="hidden pdf-mode-signature mt-12 pt-8 text-center page-break-inside-avoid">
+                    <p class="text-sm text-slate-500 mb-12">Relatório de Vistorias de Campo da Segurança do trabalho.</p>
+                    <div class="w-64 mx-auto border-t border-slate-800 pt-2">
+                        <p class="font-bold text-slate-800" id="pdf-signature-name">Inspetor</p>
+                        <p class="text-xs text-slate-500">SESMT - AL Indústria</p>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ABA 3: PRÉVIA DO RELATÓRIO (NOVA) -->
+            <!-- ========================================== -->
+            <section id="aba-previa" class="hidden fade-enter">
+                <div id="relatorio-print-container" class="bg-white dark:bg-slate-800 p-6 sm:p-10 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+                    <!-- O conteúdo do relatório será injetado aqui dinamicamente -->
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ABA 4: MOTOR JSON (CONFIG) -->
+            <!-- ========================================== -->
+            <section id="aba-config" class="hidden fade-enter no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 transition-colors">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2"><i class="fa-solid fa-database text-alblue dark:text-blue-400 mr-2"></i> Editor da Estrutura (JSON)</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">A forma mais rápida de adicionar e editar itens é através do <b>Modo OP</b> direto na aba Ronda. Mas você pode fazer alterações complexas no código abaixo se preferir.</p>
+                    
+                    <textarea id="editor-json" class="w-full h-96 font-mono text-xs p-4 bg-slate-800 dark:bg-slate-950 text-green-400 rounded-lg outline-none focus:ring-2 focus:ring-alyellow whitespace-pre border-2 border-slate-700 dark:border-slate-800 shadow-inner"></textarea>
+                    
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="salvarNovoMoldeJSON()" class="flex-1 bg-green-600 dark:bg-green-700 text-white font-bold py-3 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition">
+                            <i class="fa-solid fa-save"></i> Salvar Edições Manuais
+                        </button>
+                        <button onclick="restaurarMoldePadrao()" class="flex-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold py-3 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition border border-red-200 dark:border-red-800">
+                            <i class="fa-solid fa-rotate-left"></i> Restaurar Padrão
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modal de Toast (Avisos) -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-slate-800 dark:bg-slate-700 text-white px-6 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2 font-semibold border border-slate-700 dark:border-slate-600">
+        <i class="fa-solid fa-info-circle text-alyellow"></i> <span id="toast-msg">Mensagem</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MOTOR JAVASCRIPT INTEGRADO -->
+    <!-- ========================================== -->
+    <script>
+        // -----------------------------------------------------
+        // CONTROLE DO MODO ESCURO E MODO OP
+        // -----------------------------------------------------
+        let isModoOp = false;
+        let chartGeralInstance = null;
+        let chartSetoresInstance = null;
+
+        function aplicarTemaSalvo() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            atualizarIconeTema();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            atualizarIconeTema();
+            atualizarGraficos(); // Atualiza cores dos gráficos na hora
+        }
+
+        function atualizarIconeTema() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const icone = document.getElementById('icone-tema');
+            if(icone) icone.className = isDark ? "fa-solid fa-sun text-yellow-300" : "fa-solid fa-moon";
+        }
+
+        // -----------------------------------------------------
+        // 0. ESQUELETO DE DADOS (MOCK JSON CONFIG) - FASE 1
+        // -----------------------------------------------------
+        const mockJsonConfig = {
+            unidades: [
+                "Ferragens", 
+                "Sistemas", 
+                "Matriz Alumínio", 
+                "Filial Alumínio"
+            ],
+            setores: {
+                administrativos: [
+                    "Compras", "Financeiro", "Fiscal", "Marketing", 
+                    "PCP", "RH", "SST", "Vendas", "Qualidade"
+                ],
+                operacionais: [
+                    "Devolução/Recebimento", "Expedição", "Logística", 
+                    "Injetora", "Montagem", "Pintura", "Puxadores", 
+                    "Maxsystem", "Manutenção"
+                ]
+            },
+            categorias_inspecao: [
+                {
+                    idCategoria: "cat_5s",
+                    tituloCategoria: "Organização, Limpeza e 5S",
+                    icone: "fa-solid fa-broom",
+                    cor: "text-blue-600 dark:text-blue-400",
+                    itens: [
+                        { idItem: "chk_5s_1", descricao: "Ferramentas, peças e equipamentos estão guardados em seus devidos lugares após o uso?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_5s_2", descricao: "Corredores, rotas de pedestres e áreas de movimentação estão livres de materiais e desobstruídos?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_5s_3", descricao: "Lixeiras e coletores de resíduos estão adequados, sem transbordamento e com descarte separado corretamente?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_5s_4", descricao: "Bancadas e postos de trabalho estão limpos, organizados e sem acúmulo de sujeira ou óleo?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_cultura",
+                    tituloCategoria: "Cultura, Cuidado Ativo e Comportamento",
+                    icone: "fa-solid fa-handshake",
+                    cor: "text-indigo-600 dark:text-indigo-400",
+                    itens: [
+                        { idItem: "chk_cult_1", descricao: "Os colaboradores estão utilizando os EPIs obrigatórios para a função e de forma correta (óculos, protetor, calçado)?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_cult_2", descricao: "As orientações preventivas e de segurança estão sendo respeitadas ativamente durante a operação?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_cult_3", descricao: "Os operadores mantêm atenção exclusiva na atividade, sem distrações com celulares ou conversas paralelas?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_terceiros",
+                    tituloCategoria: "Terceiros e Liberação de Atividades",
+                    icone: "fa-solid fa-file-signature",
+                    cor: "text-purple-600 dark:text-purple-400",
+                    itens: [
+                        { idItem: "chk_terc_1", descricao: "A Permissão de Trabalho (PT) ou APR está devidamente preenchida, assinada e disponível no local da atividade?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_terc_2", descricao: "Os funcionários terceirizados estão utilizando os EPIs exigidos e os crachás de identificação estão visíveis?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_terc_3", descricao: "A área de intervenção, obra ou manutenção está devidamente isolada e sinalizada, protegendo as demais pessoas?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_emergencia",
+                    tituloCategoria: "Emergência e Sinalização",
+                    icone: "fa-solid fa-fire-extinguisher",
+                    cor: "text-red-600 dark:text-red-400",
+                    itens: [
+                        { idItem: "chk_emerg_1", descricao: "Os extintores de incêndio estão desobstruídos, devidamente sinalizados e com o lacre/manômetro conformes?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_emerg_2", descricao: "As caixas de hidrantes contêm todos os acessórios (mangueira, esguicho, chave) e o acesso está desobstruído?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_emerg_3", descricao: "As portas de emergência e rotas de fuga estão destrancadas e a sinalização fotoluminescente visível?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_quimicos",
+                    tituloCategoria: "Produtos Químicos",
+                    icone: "fa-solid fa-flask",
+                    cor: "text-emerald-600 dark:text-emerald-400",
+                    itens: [
+                        { idItem: "chk_quim_1", descricao: "Os recipientes fracionados possuem rótulos legíveis, padronizados e com a identificação correta dos riscos?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_quim_2", descricao: "Os produtos químicos estão armazenados sobre bacias de contenção adequadas para evitar derramamento no piso?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_quim_3", descricao: "Há presença de materiais para mitigação (mantas absorventes, serragem, pó) próximo aos locais de manuseio?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_quim_4", descricao: "O local de armazenamento possui ventilação adequada e está livre de fontes de ignição próximas?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_equipamentos",
+                    tituloCategoria: "Equipamentos Móveis e Máquinas",
+                    icone: "fa-solid fa-gears",
+                    cor: "text-orange-600 dark:text-orange-400",
+                    itens: [
+                        { idItem: "chk_eq_1", descricao: "Empilhadeiras e paleteiras estão em boas condições, com checklist pré-uso realizado?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_eq_2", descricao: "Proteções físicas (grades, carenagens) de máquinas estão fixadas e em perfeito estado?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_eq_3", descricao: "Ausência total de 'gambiarras', desvios mecânicos, arames ou peças improvisadas nas máquinas?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_logistica",
+                    tituloCategoria: "Logística e Veículos",
+                    icone: "fa-solid fa-truck-moving",
+                    cor: "text-sky-600 dark:text-sky-400",
+                    itens: [
+                        { idItem: "chk_log_1", descricao: "Pátio, estacionamento e vias de circulação externa estão limpos e sem obstruções?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_log_2", descricao: "As docas estão organizadas, desobstruídas e os caminhões estão utilizando calços de segurança?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_log_3", descricao: "Lonas, amarrações e disposição de cargas nos veículos estão seguras e em conformidade?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_predial",
+                    tituloCategoria: "Estrutura Predial",
+                    icone: "fa-solid fa-building",
+                    cor: "text-slate-600 dark:text-slate-300",
+                    itens: [
+                        { idItem: "chk_pred_1", descricao: "Painéis elétricos estão devidamente trancados, identificados e com área frontal desobstruída (mínimo 1 metro)?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_pred_2", descricao: "A iluminação do setor é suficiente, sem lâmpadas queimadas ou pendentes de manutenção?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_pred_3", descricao: "Pisos sem buracos, desníveis severos, óleo derramado ou poças d'água que gerem risco de queda?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_pred_4", descricao: "Fiações e cabos elétricos estão protegidos em calhas ou conduítes, sem fiação exposta ou emendada de forma irregular?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_vivencia",
+                    tituloCategoria: "Áreas de Vivência",
+                    icone: "fa-solid fa-users",
+                    cor: "text-teal-600 dark:text-teal-400",
+                    itens: [
+                        { idItem: "chk_viv_1", descricao: "Banheiros e vestiários estão limpos, higienizados, providos de papel toalha, sabonete e lixeiras esvaziadas?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_viv_2", descricao: "O refeitório e áreas de descanso estão limpos, organizados e sem acúmulo de sobras de alimentos?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_viv_3", descricao: "Os bebedouros estão higienizados, funcionando corretamente e com disponibilidade de copos descartáveis (se aplicável)?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                },
+                {
+                    idCategoria: "cat_foco",
+                    tituloCategoria: "Apontamentos Dinâmicos / Foco Crítico",
+                    icone: "fa-solid fa-bullseye",
+                    cor: "text-rose-600 dark:text-rose-400",
+                    itens: [
+                        { idItem: "chk_foc_1", descricao: "Identificado algum desvio crítico ou risco grave e iminente não contemplado nos itens anteriores?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_foc_2", descricao: "Observada alguma anomalia de comportamento inseguro sistêmico que requer ação imediata da Liderança?", permite_foto: true, campo_observacao_dinamico: true },
+                        { idItem: "chk_foc_3", descricao: "Relato de outras necessidades de reparos gerais, vazamentos pontuais ou desvios ambientais atípicos?", permite_foto: true, campo_observacao_dinamico: true }
+                    ]
+                }
+            ]
+        };
+
+        // -----------------------------------------------------
+        // 1. DADOS PADRÃO (FALLBACK)
+        // -----------------------------------------------------
+        const jsonEstruturaPadrao = [
+            {
+                idCategoria: "sec_logistica",
+                tituloCategoria: "Logística e Veículos",
+                icone: "fa-solid fa-truck-moving",
+                cor: "text-blue-600 dark:text-blue-400",
+                itens: [
+                    { idItem: "log_patio", descricao: "Organização geral e limpeza do Pátio" },
+                    { idItem: "log_portaria", descricao: "Controle de acesso e segurança na Portaria" },
+                    { idItem: "log_motos", descricao: "Estacionamento de Motos (Vazamentos/Organização)" },
+                    { idItem: "log_onibus", descricao: "Interior dos Ônibus Fretados" }
+                ]
+            },
+            {
+                idCategoria: "sec_equipamentos",
+                tituloCategoria: "Equipamentos Móveis",
+                icone: "fa-solid fa-gears",
+                cor: "text-orange-600 dark:text-orange-400",
+                itens: [
+                    { idItem: "eq_empilhadeira", descricao: "Empilhadeiras (Checklist pré-uso, cinto, giroflex)" },
+                    { idItem: "eq_paleteira", descricao: "Paleteiras (Estrutura, travas e rodízios)" }
+                ]
+            },
+            {
+                idCategoria: "sec_predial",
+                tituloCategoria: "Estrutura Predial e Elétrica",
+                icone: "fa-solid fa-industry",
+                cor: "text-slate-600 dark:text-slate-300",
+                itens: [
+                    { idItem: "pre_escadas", descricao: "Escadas, corrimãos e guarda-corpos" },
+                    { idItem: "pre_portas", descricao: "Portas e Saídas de Emergência (Desobstruídas)" },
+                    { idItem: "pre_energia", descricao: "Painéis elétricos fechados" }
+                ]
+            },
+            {
+                idCategoria: "sec_vivencia",
+                tituloCategoria: "Áreas de Vivência e Comuns",
+                icone: "fa-solid fa-users",
+                cor: "text-teal-600 dark:text-teal-400",
+                itens: [
+                    { idItem: "viv_fabril", descricao: "Área Fabril (5S, descarte correto)" },
+                    { idItem: "viv_banheiros", descricao: "Banheiros e Vestiários" }
+                ]
+            }
+        ];
+
+        // -----------------------------------------------------
+        // 2. VARIÁVEIS GLOBAIS DE ESTADO
+        // -----------------------------------------------------
+        let moldeAtual = []; 
+        let estadoAtualRonda = {
+            dataRonda: null,
+            inspetor: "",
+            focoCritico: "",
+            unidade: "",
+            setoresSelecionados: [],
+            respostas: {},
+            obsAreas: {}
+        };
+
+        // -----------------------------------------------------
+        // 3. FUNÇÕES DE INICIALIZAÇÃO E MESCLAGEM
+        // -----------------------------------------------------
+        window.onload = () => {
+            aplicarTemaSalvo();
+            bootApp();
+        };
+
+        async function fetchChecklistStructure() {
+            // Simula uma requisição à API/GitHub que retorna a configuração mestre
+            return new Promise((resolve) => {
+                setTimeout(() => resolve(mockJsonConfig), 200);
+            });
+        }
+
+        function initNewReport(unidade, setoresArray) {
+            estadoAtualRonda.unidade = unidade;
+            estadoAtualRonda.setoresSelecionados = setoresArray;
+            estadoAtualRonda.dataRonda = new Date().toISOString();
+            
+            salvarProgresso();
+            mostrarToast(`Nova vistoria iniciada em: ${unidade}`);
+        }
+
+        function bootApp() {
+            // A. Tenta carregar o Molde (Prioriza a nova estrutura mockJsonConfig)
+            const moldeSalvo = localStorage.getItem('sgi_vistoria_molde');
+            if (moldeSalvo) {
+                try { moldeAtual = JSON.parse(moldeSalvo); } 
+                catch (e) { moldeAtual = mockJsonConfig.categorias_inspecao || jsonEstruturaPadrao; }
+            } else {
+                moldeAtual = mockJsonConfig.categorias_inspecao || jsonEstruturaPadrao;
+            }
+
+            // B. Tenta carregar o Progresso
+            const progressoSalvo = localStorage.getItem('sgi_vistoria_progresso');
+            let progressoLocal = null;
+            if (progressoSalvo) {
+                try { progressoLocal = JSON.parse(progressoSalvo); } catch(e) {}
+            }
+
+            // C. Mescla os Dados
+            mergeData(moldeAtual, progressoLocal);
+
+            // D. Renderiza a Interface
+            renderizarChecklist();
+            atualizarInputsMetadados();
+            calcularEstatisticas();
+            sincronizarEditorJson();
+        }
+
+        function mergeData(estruturaJson, progressoLocal) {
+            let respostasMescladas = {};
+            let obsAreasMescladas = {};
+            
+            // Garante o mapeamento correto caso o JSON contenha root ou vá direto nas categorias
+            const categorias = estruturaJson.categorias_inspecao || estruturaJson;
+            
+            categorias.forEach(categoria => {
+                obsAreasMescladas[categoria.idCategoria] = "";
+                categoria.itens.forEach(item => {
+                    respostasMescladas[item.idItem] = {
+                        status: null, 
+                        observacao: "",
+                        solucao: "",
+                        fotoBase64: null 
+                    };
+                });
+            });
+
+            if (progressoLocal && progressoLocal.respostas) {
+                Object.keys(progressoLocal.respostas).forEach(itemIdSalvo => {
+                    if (respostasMescladas[itemIdSalvo] !== undefined) {
+                        respostasMescladas[itemIdSalvo] = progressoLocal.respostas[itemIdSalvo];
+                    }
+                });
+                
+                if (progressoLocal.obsAreas) {
+                    Object.keys(progressoLocal.obsAreas).forEach(idCatSalvo => {
+                        if (obsAreasMescladas[idCatSalvo] !== undefined) {
+                            obsAreasMescladas[idCatSalvo] = progressoLocal.obsAreas[idCatSalvo];
+                        }
+                    });
+                }
+
+                estadoAtualRonda.inspetor = progressoLocal.inspetor || "";
+                estadoAtualRonda.focoCritico = progressoLocal.focoCritico || "";
+                estadoAtualRonda.dataRonda = progressoLocal.dataRonda || new Date().toISOString();
+                
+                // Mapeamento dos novos campos relacionais
+                estadoAtualRonda.unidade = progressoLocal.unidade || "";
+                estadoAtualRonda.setoresSelecionados = progressoLocal.setoresSelecionados || [];
+            } else {
+                estadoAtualRonda.dataRonda = new Date().toISOString();
+            }
+
+            estadoAtualRonda.respostas = respostasMescladas;
+            estadoAtualRonda.obsAreas = obsAreasMescladas;
+        }
+
+        function salvarProgresso() {
+            localStorage.setItem('sgi_vistoria_progresso', JSON.stringify(estadoAtualRonda));
+            calcularEstatisticas();
+        }
+
+        function salvarMetadados() {
+            estadoAtualRonda.inspetor = document.getElementById('input-inspetor').value;
+            estadoAtualRonda.focoCritico = document.getElementById('input-foco').value;
+            salvarProgresso();
+        }
+
+        function atualizarInputsMetadados() {
+            document.getElementById('input-inspetor').value = estadoAtualRonda.inspetor;
+            document.getElementById('input-foco').value = estadoAtualRonda.focoCritico;
+        }
+
+        function sincronizarEditorJson() {
+            document.getElementById('editor-json').value = JSON.stringify(moldeAtual, null, 4);
+        }
+
+        // -----------------------------------------------------
+        // 4. RENDERIZAÇÃO DA INTERFACE (Checklist Dinâmico)
+        // -----------------------------------------------------
+        function renderizarChecklist() {
+            const container = document.getElementById('container-sanfonas');
+            let htmlHTML = '';
+
+            moldeAtual.forEach(secao => {
+                const bordaCat = isModoOp ? 'border-red-300 dark:border-red-500' : 'border-slate-200 dark:border-slate-700';
+                
+                htmlHTML += `
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border ${bordaCat} overflow-hidden relative group transition-colors page-break-inside-avoid">
+                `;
+
+                // Cabeçalho da Sanfona
+                htmlHTML += `
+                    <button onclick="toggleSanfona('${secao.idCategoria}', event)" class="w-full px-5 py-4 flex items-center justify-between bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors focus:outline-none border-b border-transparent">
+                        <div class="flex items-center gap-3 pr-20"> <!-- Espaço para botões OP -->
+                            <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 ${secao.cor}">
+                                <i class="${secao.icone}"></i>
+                            </div>
+                            <span class="font-bold text-slate-800 dark:text-slate-100 text-left">${secao.tituloCategoria}</span>
+                        </div>
+                        <i id="icon-${secao.idCategoria}" class="fa-solid fa-chevron-down text-slate-400 dark:text-slate-500 transition-transform duration-300 shrink-0"></i>
+                    </button>
+                `;
+
+                // Botões de Edição da ABA (Apenas Modo OP)
+                if (isModoOp) {
+                    htmlHTML += `
+                    <div class="no-print absolute top-3 right-12 flex gap-1 bg-white dark:bg-slate-800 p-1 rounded border border-red-200 dark:border-red-800 shadow-sm z-10">
+                        <button title="Editar Setor" onclick="editarCategoria('${secao.idCategoria}')" class="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 bg-slate-100 hover:bg-blue-50 dark:bg-slate-700 dark:hover:bg-blue-900/30 w-7 h-7 rounded flex items-center justify-center transition">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button title="Excluir Setor" onclick="excluirCategoria('${secao.idCategoria}')" class="text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 bg-slate-100 hover:bg-red-50 dark:bg-slate-700 dark:hover:bg-red-900/30 w-7 h-7 rounded flex items-center justify-center transition">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                    `;
+                }
+
+                // Corpo da Sanfona
+                htmlHTML += `
+                    <div id="content-${secao.idCategoria}" class="accordion-content bg-slate-50 dark:bg-slate-900/50">
+                        <div class="p-2 space-y-2 pb-4">
+                `;
+
+                secao.itens.forEach(item => {
+                    const resposta = estadoAtualRonda.respostas[item.idItem];
+                    const isOk = resposta ? (resposta.status === 'ok') : false;
+                    const isNk = resposta ? (resposta.status === 'pontuado') : false;
+                    const isSa = resposta ? (resposta.status === 'resolvido') : false;
+                    
+                    const classBtnOk = isOk 
+                        ? "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-green-500 bg-green-50 dark:bg-green-900/40 text-xs font-bold text-green-700 dark:text-green-400 shadow-sm flex items-center justify-center gap-1" 
+                        : "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-all flex items-center justify-center gap-1";
+                    
+                    const classBtnNk = isNk 
+                        ? "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-red-500 bg-red-50 dark:bg-red-900/40 text-xs font-bold text-red-700 dark:text-red-400 shadow-sm flex items-center justify-center gap-1" 
+                        : "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all flex items-center justify-center gap-1";
+                    
+                    const classBtnSa = isSa 
+                        ? "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/40 text-xs font-bold text-blue-700 dark:text-blue-400 shadow-sm flex items-center justify-center gap-1" 
+                        : "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex items-center justify-center gap-1";
+
+                    const temFoto = resposta && resposta.fotoBase64 !== null;
+                    const temNota = resposta && resposta.observacao.trim() !== "";
+                    const temSolucao = resposta && resposta.solucao && resposta.solucao.trim() !== "";
+                    const areaAberta = isNk || isSa || temFoto || temNota || temSolucao;
+
+                    const bordaItem = isModoOp ? 'border-red-200 dark:border-red-800 border-dashed' : 'border-slate-200 dark:border-slate-700';
+
+                    htmlHTML += `
+                            <div class="bg-white dark:bg-slate-800 border ${bordaItem} p-4 rounded-lg shadow-sm relative transition-colors page-break-inside-avoid">
+                    `;
+                    
+                    // Botões de Edição do ITEM (Apenas Modo OP)
+                    if (isModoOp) {
+                        htmlHTML += `
+                            <div class="no-print absolute top-2 right-2 flex gap-1 z-10">
+                                <button title="Editar Pergunta" onclick="editarItem('${secao.idCategoria}', '${item.idItem}')" class="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-50 hover:bg-blue-50 dark:bg-slate-700 dark:hover:bg-blue-900/30 w-6 h-6 rounded flex items-center justify-center transition border border-slate-200 dark:border-slate-600">
+                                    <i class="fa-solid fa-pen text-[10px]"></i>
+                                </button>
+                                <button title="Excluir Pergunta" onclick="excluirItem('${secao.idCategoria}', '${item.idItem}')" class="text-slate-400 hover:text-red-600 dark:hover:text-red-400 bg-slate-50 hover:bg-red-50 dark:bg-slate-700 dark:hover:bg-red-900/30 w-6 h-6 rounded flex items-center justify-center transition border border-slate-200 dark:border-slate-600">
+                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    htmlHTML += `
+                                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 pr-14">${item.descricao}</p>
+                                
+                                <div class="flex flex-wrap gap-2 items-center justify-between">
+                                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                                        <button id="btn-ok-${item.idItem}" onclick="marcarStatus('${item.idItem}', 'ok')" class="${classBtnOk}"><i class="fa-solid fa-check"></i> OK</button>
+                                        <button id="btn-nk-${item.idItem}" onclick="marcarStatus('${item.idItem}', 'pontuado')" class="${classBtnNk}"><i class="fa-solid fa-triangle-exclamation"></i> Item Pontuado</button>
+                                        <button id="btn-sa-${item.idItem}" onclick="marcarStatus('${item.idItem}', 'resolvido')" class="${classBtnSa}"><i class="fa-solid fa-check-double"></i> Sit. Resolvida</button>
+                                    </div>
+                                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                        <button id="btn-nota-${item.idItem}" onclick="toggleAreaFoto('${item.idItem}')" class="no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold ${temNota || temSolucao ? 'bg-alyellow text-slate-900 dark:bg-yellow-500 dark:text-slate-900' : 'text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'} transition-colors flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-book"></i> <span>${temNota || temSolucao ? 'Anotado' : 'Anotar'}</span>
+                                        </button>
+                                        <button onclick="toggleAreaFoto('${item.idItem}')" class="no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold ${temFoto ? 'bg-alblue dark:bg-blue-600 text-white' : 'text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'} transition-colors flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-camera"></i> <span id="lbl-foto-${item.idItem}">${temFoto ? 'Foto Anexada' : 'Foto'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="area-foto-obs-${item.idItem}" class="photo-obs-area bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 ${areaAberta ? 'open' : ''}">
+                                    <div class="mb-3">
+                                        <label for="input-foto-${item.idItem}" class="no-print cursor-pointer block w-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 text-center hover:border-alblue dark:hover:border-blue-400 transition-colors bg-white dark:bg-slate-800 ${temFoto ? 'hidden' : ''}">
+                                            <i class="fa-solid fa-cloud-arrow-up text-slate-400 dark:text-slate-500 text-xl mb-1"></i>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold">Toque para anexar evidência fotográfica</p>
+                                        </label>
+                                        <input type="file" id="input-foto-${item.idItem}" accept="image/*" onchange="processarImagem(this, '${item.idItem}')">
+                                        
+                                        <div id="preview-container-${item.idItem}" class="${temFoto ? '' : 'hidden'} mt-2 relative inline-block w-full text-center">
+                                            <img id="preview-img-${item.idItem}" src="${temFoto ? resposta.fotoBase64 : ''}" alt="Evidência fotográfica" class="h-32 w-auto max-w-full rounded border border-slate-300 dark:border-slate-600 object-cover shadow-sm mx-auto">
+                                            <button onclick="removerFoto('${item.idItem}')" class="no-print absolute -top-2 right-0 md:right-auto bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600">
+                                                <i class="fa-solid fa-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-3">
+                                        <div id="box-obs-${item.idItem}">
+                                            <label id="lbl-obs-${item.idItem}" class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block ${isSa ? '' : 'hidden'}">Qual foi o desvio ou situação encontrada?</label>
+                                            <textarea id="obs-${item.idItem}" onchange="salvarObservacao('${item.idItem}', this.value)" rows="2" placeholder="Descreva a situação encontrada ou a anotação..." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2 text-sm rounded focus:outline-none focus:ring-2 focus:ring-alblue dark:focus:ring-blue-500 text-slate-700 dark:text-slate-200 transition-all resize-none shadow-sm">${resposta ? resposta.observacao : ''}</textarea>
+                                        </div>
+                                        <div id="box-solucao-${item.idItem}" class="${isSa ? '' : 'hidden'}">
+                                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">Qual foi a solução adotada?</label>
+                                            <textarea id="solucao-${item.idItem}" onchange="salvarSolucao('${item.idItem}', this.value)" rows="2" placeholder="Descreva como a situação foi resolvida no local..." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-2 text-sm rounded focus:outline-none focus:ring-2 focus:ring-alblue dark:focus:ring-blue-500 text-slate-700 dark:text-slate-200 transition-all resize-none shadow-sm">${resposta && resposta.solucao ? resposta.solucao : ''}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    `;
+                });
+
+                const obsAreaTexto = estadoAtualRonda.obsAreas[secao.idCategoria] || "";
+                htmlHTML += `
+                            <div class="mt-4 px-2 page-break-inside-avoid ${obsAreaTexto === '' ? 'pdf-hide-empty-obs' : ''}">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Observação Geral - ${secao.tituloCategoria}</label>
+                                <textarea onchange="salvarObservacaoArea('${secao.idCategoria}', this.value)" rows="2" placeholder="Descreva aqui situações ou comentários gerais sobre este setor..." class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 p-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-alblue dark:focus:ring-blue-500 text-slate-700 dark:text-slate-200 transition-all resize-none shadow-sm">${obsAreaTexto}</textarea>
+                            </div>
+                `;
+
+                // Botão de Adicionar Item Dinâmico (Apenas Modo OP)
+                if (isModoOp) {
+                    htmlHTML += `
+                            <div class="no-print pt-3 mt-2 border-t border-slate-200 dark:border-slate-700 border-dashed flex justify-center">
+                                <button onclick="adicionarNovoItem('${secao.idCategoria}')" class="text-xs font-bold text-red-600 dark:text-red-400 hover:text-white dark:hover:text-white bg-red-50 dark:bg-red-900/30 hover:bg-red-600 dark:hover:bg-red-500 transition-colors px-4 py-2 rounded-lg border border-red-200 dark:border-red-800 shadow-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Adicionar Pergunta
+                                </button>
+                            </div>
+                    `;
+                }
+
+                htmlHTML += `</div></div></div>`;
+            });
+
+            // Adicionar Nova Categoria Geral (Apenas Modo OP)
+            if (isModoOp) {
+                htmlHTML += `
+                <div class="no-print mt-6 flex justify-center">
+                    <button onclick="adicionarNovaCategoria()" class="w-full sm:w-auto bg-red-600 dark:bg-red-700 text-white font-bold py-4 px-6 rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition shadow-md flex items-center justify-center gap-2 border-2 border-red-800 dark:border-red-900 border-dashed">
+                        <i class="fa-solid fa-folder-plus text-xl"></i> CADASTRAR NOVO SETOR / ABA
+                    </button>
+                </div>
+                `;
+            }
+
+            container.innerHTML = htmlHTML;
+        }
+
+        // -----------------------------------------------------
+        // 5. LÓGICA DO MODO OPERACIONAL (OP) E EDIÇÃO JSON
+        // -----------------------------------------------------
+        function toggleModoOp() {
+            const btn = document.getElementById('btn-modo-op');
+            const icon = document.getElementById('icone-modo-op');
+
+            if (isModoOp) {
+                isModoOp = false;
+                btn.classList.remove('bg-red-600', 'dark:bg-red-600');
+                btn.classList.add('bg-slate-700');
+                icon.classList.remove('fa-lock-open');
+                icon.classList.add('fa-lock');
+                mostrarToast("Modo OP Desativado. Visualização normal.");
+                renderizarChecklist();
+            } else {
+                const senha = prompt("ACESSO RESTRITO:\nDigite a senha para habilitar a edição da estrutura da Vistoria:");
+                if (senha === "WELL2103") {
+                    isModoOp = true;
+                    btn.classList.remove('bg-slate-700');
+                    btn.classList.add('bg-red-600', 'dark:bg-red-600');
+                    icon.classList.remove('fa-lock');
+                    icon.classList.add('fa-lock-open');
+                    mostrarToast("MODO OP ATIVADO! Você pode editar a estrutura.");
+                    mudarAba('checklist');
+                    renderizarChecklist();
+                } else if (senha !== null) {
+                    alert("Senha incorreta!");
+                }
+            }
+        }
+
+        function salvarEAtualizarEstrutura() {
+            localStorage.setItem('sgi_vistoria_molde', JSON.stringify(moldeAtual));
+            mergeData(moldeAtual, estadoAtualRonda);
+            salvarProgresso();
+            sincronizarEditorJson();
+            renderizarChecklist();
+        }
+
+        function adicionarNovaCategoria() {
+            const titulo = prompt("Digite o nome do novo Setor (Ex: Oficina, Ferramentaria):");
+            if (!titulo || titulo.trim() === "") return;
+            const iconeDefault = prompt("Opcional: Digite uma classe FontAwesome para o ícone (Ex: fa-solid fa-wrench) ou deixe em branco:");
+            const novaCat = { idCategoria: "sec_" + Date.now(), tituloCategoria: titulo.trim(), icone: (iconeDefault && iconeDefault.trim() !== "") ? iconeDefault : "fa-solid fa-list-check", cor: "text-slate-600 dark:text-slate-300", itens: [] };
+            moldeAtual.push(novaCat); salvarEAtualizarEstrutura(); mostrarToast(`Setor '${titulo}' criado com sucesso!`);
+            setTimeout(() => toggleSanfona(novaCat.idCategoria, null), 100);
+        }
+        function editarCategoria(idCat) {
+            const cat = moldeAtual.find(c => c.idCategoria === idCat); if (!cat) return;
+            const novoTitulo = prompt("Editar Título do Setor:", cat.tituloCategoria); if (novoTitulo === null) return;
+            const novoIcone = prompt("Editar Classe do Ícone (FontAwesome):", cat.icone); if (novoIcone === null) return;
+            cat.tituloCategoria = novoTitulo.trim(); cat.icone = novoIcone.trim(); salvarEAtualizarEstrutura(); mostrarToast("Setor atualizado!");
+        }
+        function excluirCategoria(idCat) {
+            const cat = moldeAtual.find(c => c.idCategoria === idCat); if (!cat) return;
+            if (confirm(`ATENÇÃO!\nTem certeza que deseja apagar a aba inteira "${cat.tituloCategoria}" e todas as suas perguntas?`)) {
+                moldeAtual = moldeAtual.filter(c => c.idCategoria !== idCat); salvarEAtualizarEstrutura(); mostrarToast("Setor excluído definitivamente.");
+            }
+        }
+        function adicionarNovoItem(idCategoria) {
+            const descricao = prompt("Digite a descrição da nova pergunta/item:"); if (!descricao || descricao.trim() === "") return;
+            const categoria = moldeAtual.find(c => c.idCategoria === idCategoria); if (!categoria) return;
+            const novoItem = { idItem: "item_" + Date.now(), descricao: descricao.trim() }; categoria.itens.push(novoItem); 
+            
+            estadoAtualRonda.respostas[novoItem.idItem] = {
+                status: null, 
+                observacao: "",
+                solucao: "",
+                fotoBase64: null 
+            };
+            
+            salvarEAtualizarEstrutura();
+            const conteudo = document.getElementById(`content-${idCategoria}`); const icone = document.getElementById(`icon-${idCategoria}`);
+            if (conteudo) { conteudo.classList.add('open'); icone.style.transform = 'rotate(180deg)'; } mostrarToast("Pergunta adicionada!");
+        }
+        function editarItem(idCat, idItem) {
+            const categoria = moldeAtual.find(c => c.idCategoria === idCat); if (!categoria) return;
+            const item = categoria.itens.find(i => i.idItem === idItem); if (!item) return;
+            const novaDesc = prompt("Editar Pergunta:", item.descricao);
+            if (novaDesc !== null && novaDesc.trim() !== "") { item.descricao = novaDesc.trim(); salvarEAtualizarEstrutura(); setTimeout(() => { document.getElementById(`content-${idCat}`).classList.add('open'); document.getElementById(`icon-${idCat}`).style.transform = 'rotate(180deg)'; }, 50); }
+        }
+        function excluirItem(idCat, idItem) {
+            const categoria = moldeAtual.find(c => c.idCategoria === idCat); if (!categoria) return;
+            const item = categoria.itens.find(i => i.idItem === idItem); if (!item) return;
+            if (confirm(`Deseja apagar a pergunta:\n"${item.descricao}"?`)) { categoria.itens = categoria.itens.filter(i => i.idItem !== idItem); delete estadoAtualRonda.respostas[idItem]; salvarEAtualizarEstrutura(); setTimeout(() => { document.getElementById(`content-${idCat}`).classList.add('open'); document.getElementById(`icon-${idCat}`).style.transform = 'rotate(180deg)'; }, 50); mostrarToast("Pergunta excluída."); }
+        }
+
+        // -----------------------------------------------------
+        // 6. LÓGICA DE INTERAÇÃO BÁSICA (TELA)
+        // -----------------------------------------------------
+        function mudarAba(abaId) {
+            document.getElementById('aba-dashboard').classList.add('hidden');
+            document.getElementById('aba-checklist').classList.add('hidden');
+            document.getElementById('aba-previa').classList.add('hidden');
+            document.getElementById('aba-config').classList.add('hidden');
+            
+            const classesInativas = "flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-alblue_light text-slate-300 hover:text-white hover:bg-alblue whitespace-nowrap";
+            document.getElementById('btn-tab-dashboard').className = classesInativas;
+            document.getElementById('btn-tab-checklist').className = classesInativas;
+            document.getElementById('btn-tab-previa').className = classesInativas;
+            document.getElementById('btn-tab-config').className = classesInativas;
+
+            document.getElementById(`aba-${abaId}`).classList.remove('hidden');
+            document.getElementById(`btn-tab-${abaId}`).className = "flex-1 py-3 px-3 rounded-t-lg font-bold text-xs sm:text-sm transition-colors flex justify-center items-center gap-2 bg-slate-100 dark:bg-slate-900 text-alblue dark:text-blue-400 shadow-[0_-2px_5px_rgba(0,0,0,0.1)] whitespace-nowrap";
+            
+            if (abaId === 'previa') {
+                renderizarPrevia();
+            }
+        }
+
+        function toggleSanfona(id, event) {
+            if (event && event.target.closest('button') && event.target.closest('button').getAttribute('onclick') && event.target.closest('button').getAttribute('onclick').includes('Categoria')) return;
+            const conteudo = document.getElementById(`content-${id}`);
+            const icone = document.getElementById(`icon-${id}`);
+            if(!conteudo) return;
+            conteudo.classList.toggle('open');
+            if (conteudo.classList.contains('open')) icone.style.transform = 'rotate(180deg)';
+            else icone.style.transform = 'rotate(0deg)';
+        }
+
+        function marcarStatus(itemId, status) {
+            // Lógica de Desclicar (Toggle): Se já for o status atual, ele reseta para null.
+            const statusAtual = estadoAtualRonda.respostas[itemId].status;
+            const novoStatus = (statusAtual === status) ? null : status;
+
+            estadoAtualRonda.respostas[itemId].status = novoStatus;
+            salvarProgresso();
+            
+            const btnOk = document.getElementById(`btn-ok-${itemId}`);
+            const btnNk = document.getElementById(`btn-nk-${itemId}`);
+            const btnSa = document.getElementById(`btn-sa-${itemId}`);
+            const areaObs = document.getElementById(`area-foto-obs-${itemId}`);
+            const lblObs = document.getElementById(`lbl-obs-${itemId}`);
+            const boxSolucao = document.getElementById(`box-solucao-${itemId}`);
+
+            // Resetar estilos de todos os botões para o padrão (Desclicado)
+            btnOk.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-green-50 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-all flex items-center justify-center gap-1";
+            btnNk.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all flex items-center justify-center gap-1";
+            if (btnSa) btnSa.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-all flex items-center justify-center gap-1";
+
+            // Aplicar estilo visual à nova seleção
+            if (novoStatus === 'ok') {
+                btnOk.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-green-500 bg-green-50 dark:bg-green-900/40 text-xs font-bold text-green-700 dark:text-green-400 shadow-sm flex items-center justify-center gap-1";
+                if (lblObs) lblObs.classList.add('hidden');
+                if (boxSolucao) boxSolucao.classList.add('hidden');
+            } else if (novoStatus === 'pontuado') {
+                btnNk.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-red-500 bg-red-50 dark:bg-red-900/40 text-xs font-bold text-red-700 dark:text-red-400 shadow-sm flex items-center justify-center gap-1";
+                if (lblObs) lblObs.classList.add('hidden');
+                if (boxSolucao) boxSolucao.classList.add('hidden');
+            } else if (novoStatus === 'resolvido') {
+                if (btnSa) btnSa.className = "flex-1 sm:flex-none px-3 py-2 rounded-md border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/40 text-xs font-bold text-blue-700 dark:text-blue-400 shadow-sm flex items-center justify-center gap-1";
+                if (lblObs) lblObs.classList.remove('hidden');
+                if (boxSolucao) boxSolucao.classList.remove('hidden');
+            } else {
+                // Caso seja desclicado (novoStatus === null)
+                if (lblObs) lblObs.classList.add('hidden');
+                if (boxSolucao) boxSolucao.classList.add('hidden');
+            }
+
+            // Gerenciamento inteligente da abertura da área de observação
+            const resp = estadoAtualRonda.respostas[itemId];
+            const temFoto = resp && resp.fotoBase64 !== null;
+            const temNota = resp && resp.observacao.trim() !== "";
+            const temSolucao = resp && resp.solucao && resp.solucao.trim() !== "";
+            
+            // Só deixa aberto se for NC, SA, ou se o usuário ativamente escreveu uma nota / foto
+            const deveEstarAberto = (novoStatus === 'pontuado' || novoStatus === 'resolvido' || temFoto || temNota || temSolucao);
+            
+            if (deveEstarAberto) {
+                areaObs.classList.add('open');
+            } else {
+                areaObs.classList.remove('open');
+            }
+        }
+
+        function salvarObservacao(itemId, texto) {
+            estadoAtualRonda.respostas[itemId].observacao = texto;
+            salvarProgresso();
+            
+            const btnNota = document.getElementById(`btn-nota-${itemId}`);
+            const solucao = estadoAtualRonda.respostas[itemId].solucao || "";
+            if (btnNota) {
+                if (texto.trim() !== "" || solucao.trim() !== "") {
+                    btnNota.className = "no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold bg-alyellow text-slate-900 dark:bg-yellow-500 dark:text-slate-900 transition-colors flex items-center justify-center gap-2";
+                    btnNota.innerHTML = '<i class="fa-solid fa-book"></i> <span>Anotado</span>';
+                } else {
+                    btnNota.className = "no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2";
+                    btnNota.innerHTML = '<i class="fa-solid fa-book"></i> <span>Anotar</span>';
+                }
+            }
+        }
+
+        function salvarSolucao(itemId, texto) {
+            estadoAtualRonda.respostas[itemId].solucao = texto;
+            salvarProgresso();
+            
+            const btnNota = document.getElementById(`btn-nota-${itemId}`);
+            const obs = estadoAtualRonda.respostas[itemId].observacao || "";
+            if (btnNota) {
+                if (texto.trim() !== "" || obs.trim() !== "") {
+                    btnNota.className = "no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold bg-alyellow text-slate-900 dark:bg-yellow-500 dark:text-slate-900 transition-colors flex items-center justify-center gap-2";
+                    btnNota.innerHTML = '<i class="fa-solid fa-book"></i> <span>Anotado</span>';
+                } else {
+                    btnNota.className = "no-print flex-1 sm:flex-none px-3 py-2 rounded-md text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2";
+                    btnNota.innerHTML = '<i class="fa-solid fa-book"></i> <span>Anotar</span>';
+                }
+            }
+        }
+
+        function salvarObservacaoArea(idCategoria, texto) {
+            estadoAtualRonda.obsAreas[idCategoria] = texto;
+            salvarProgresso();
+        }
+
+        function toggleAreaFoto(itemId) {
+            document.getElementById(`area-foto-obs-${itemId}`).classList.toggle('open');
+        }
+
+        function processarImagem(input, itemId) {
+            if (input.files && input.files[0]) {
+                const leitor = new FileReader();
+                leitor.onload = function(e) {
+                    const base64 = e.target.result;
+                    estadoAtualRonda.respostas[itemId].fotoBase64 = base64;
+                    salvarProgresso();
+                    document.getElementById(`preview-img-${itemId}`).src = base64;
+                    document.querySelector(`label[for="input-foto-${itemId}"]`).classList.add('hidden');
+                    document.getElementById(`preview-container-${itemId}`).classList.remove('hidden');
+                    const lblBotao = document.getElementById(`lbl-foto-${itemId}`);
+                    lblBotao.innerText = "Foto Anexada";
+                    lblBotao.parentElement.className = "no-print w-full sm:w-auto mt-2 sm:mt-0 px-3 py-2 rounded-md text-xs font-bold bg-alblue dark:bg-blue-600 text-white hover:bg-slate-200 transition-colors flex items-center justify-center gap-2";
+                }
+                leitor.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removerFoto(itemId) {
+            estadoAtualRonda.respostas[itemId].fotoBase64 = null;
+            salvarProgresso();
+            document.getElementById(`input-foto-${itemId}`).value = "";
+            document.getElementById(`preview-img-${itemId}`).src = "";
+            document.getElementById(`preview-container-${itemId}`).classList.add('hidden');
+            document.querySelector(`label[for="input-foto-${itemId}"]`).classList.remove('hidden');
+            const lblBotao = document.getElementById(`lbl-foto-${itemId}`);
+            lblBotao.innerText = "Adicionar Foto";
+            lblBotao.parentElement.className = "no-print w-full sm:w-auto mt-2 sm:mt-0 px-3 py-2 rounded-md text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2";
+        }
+
+        // -----------------------------------------------------
+        // 7. DASHBOARD, GRÁFICOS E RELATÓRIOS (PDF)
+        // -----------------------------------------------------
+        function calcularEstatisticas() {
+            let total = 0, oks = 0, nks = 0, sas = 0;
+            Object.values(estadoAtualRonda.respostas).forEach(resp => {
+                total++;
+                if(resp.status === 'ok') oks++;
+                if(resp.status === 'pontuado') nks++;
+                if(resp.status === 'resolvido') sas++;
+            });
+            
+            const respondidos = oks + nks + sas;
+            const perc = total > 0 ? Math.round((respondidos / total) * 100) : 0;
+
+            document.getElementById('stat-progresso').innerText = `${perc}%`;
+            document.getElementById('stat-ok').innerText = oks;
+            document.getElementById('stat-nk').innerText = nks;
+
+            atualizarGraficos(); // Atualiza os gráficos sempre que os dados mudam
+            atualizarDashboardExcecoes(); // Atualiza a lista de exceções
+        }
+
+        // NOVO: Função que cria/atualiza o painel focado apenas em Exceções (Ignora os OKs)
+        function atualizarDashboardExcecoes() {
+            let container = document.getElementById('container-excecoes-dashboard');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'container-excecoes-dashboard';
+                container.className = 'mt-8 mb-6 page-break-inside-avoid transition-colors';
+                
+                // Insere logo após os gráficos no Dashboard
+                const divGraficos = document.querySelector('#aba-dashboard .grid.grid-cols-1.md\\:grid-cols-2');
+                if (divGraficos) divGraficos.after(container);
+                else return; 
+            }
+
+            let htmlPontuados = '';
+            let htmlResolvidos = '';
+            let countPontuados = 0;
+            let countResolvidos = 0;
+
+            moldeAtual.forEach(cat => {
+                cat.itens.forEach(item => {
+                    const resp = estadoAtualRonda.respostas[item.idItem];
+                    if (!resp) return;
+
+                    // Ignora sumariamente o status "ok" ou null
+                    if (resp.status === 'pontuado') {
+                        countPontuados++;
+                        htmlPontuados += criarCardExcecao(item.descricao, cat.tituloCategoria, 'pontuado', resp);
+                    } else if (resp.status === 'resolvido') {
+                        countResolvidos++;
+                        htmlResolvidos += criarCardExcecao(item.descricao, cat.tituloCategoria, 'resolvido', resp);
+                    }
+                });
+                
+                // Verifica observações gerais da área (Trata como ponto de atenção)
+                const obsArea = estadoAtualRonda.obsAreas[cat.idCategoria];
+                if (obsArea && obsArea.trim() !== '') {
+                    countPontuados++;
+                    htmlPontuados += `
+                        <div class="bg-white dark:bg-slate-800 border-l-4 border-yellow-500 p-3 mb-2 rounded shadow-sm border-y border-r border-slate-100 dark:border-slate-700">
+                            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${cat.tituloCategoria} - Observação Geral</p>
+                            <p class="text-sm text-slate-700 dark:text-slate-200">${obsArea}</p>
+                        </div>`;
+                }
+            });
+
+            let htmlFinal = `<h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-filter text-alblue dark:text-blue-400 mr-2"></i> Resumo de Exceções e Ações</h2>`;
+
+            if (countPontuados === 0 && countResolvidos === 0) {
+                htmlFinal += `
+                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-6 text-center rounded-xl transition-colors">
+                        <i class="fa-solid fa-shield-check text-4xl text-green-500 mb-2"></i>
+                        <p class="text-green-800 dark:text-green-400 font-bold">Nenhuma exceção relatada!</p>
+                        <p class="text-xs text-green-600 dark:text-green-500 mt-1">Até o momento, não há desvios registrados nesta ronda.</p>
+                    </div>`;
+            } else {
+                htmlFinal += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                
+                // Coluna: Itens Pontuados
+                htmlFinal += `<div>
+                    <h3 class="font-bold text-red-600 dark:text-red-400 mb-3 flex items-center gap-2"><i class="fa-solid fa-xmark-circle"></i> Itens Pontuados (${countPontuados})</h3>
+                    <div class="space-y-2">
+                        ${countPontuados > 0 ? htmlPontuados : '<p class="text-sm text-slate-500 dark:text-slate-400 italic">Nenhum item pendente.</p>'}
+                    </div>
+                </div>`;
+
+                // Coluna: Situações Resolvidas
+                htmlFinal += `<div>
+                    <h3 class="font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2"><i class="fa-solid fa-check-double"></i> Situações Resolvidas (${countResolvidos})</h3>
+                    <div class="space-y-2">
+                        ${countResolvidos > 0 ? htmlResolvidos : '<p class="text-sm text-slate-500 dark:text-slate-400 italic">Nenhuma solução imediata registrada.</p>'}
+                    </div>
+                </div>`;
+                
+                htmlFinal += `</div>`;
+            }
+
+            container.innerHTML = htmlFinal;
+        }
+
+        // NOVO: Componente auxiliar para gerar o Card visual de uma exceção
+        function criarCardExcecao(descricao, categoria, tipo, resp) {
+            const borderClass = tipo === 'pontuado' ? 'border-red-500' : 'border-blue-500';
+            let detalhes = '';
+            
+            if (resp.observacao) detalhes += `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1"><b>Desvio / Obs:</b> ${resp.observacao}</p>`;
+            if (resp.solucao) detalhes += `<p class="text-sm text-slate-600 dark:text-slate-300 mt-1"><b>Solução:</b> ${resp.solucao}</p>`;
+            if (resp.fotoBase64) detalhes += `<img src="${resp.fotoBase64}" class="mt-2 h-16 w-auto rounded border border-slate-300 dark:border-slate-600">`;
+            
+            return `
+                <div class="bg-white dark:bg-slate-800 border-l-4 ${borderClass} p-3 rounded shadow-sm border-y border-r border-slate-100 dark:border-slate-700 transition-colors">
+                    <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${categoria}</p>
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight">${descricao}</p>
+                    ${detalhes}
+                </div>
+            `;
+        }
+
+        function atualizarGraficos() {
+            let oks = 0, nks = 0, sas = 0, pendentes = 0;
+            let ncPorSetorLabels = [];
+            let ncPorSetorDados = [];
+
+            moldeAtual.forEach(cat => {
+                let ncSetor = 0;
+                cat.itens.forEach(item => {
+                    const resp = estadoAtualRonda.respostas[item.idItem];
+                    if (resp && resp.status === 'ok') oks++;
+                    else if (resp && resp.status === 'pontuado') { nks++; ncSetor++; }
+                    else if (resp && resp.status === 'resolvido') { sas++; ncSetor++; } // Contabilizamos resolvidas como ocorrência no gráfico
+                    else pendentes++;
+                });
+                ncPorSetorLabels.push(cat.tituloCategoria);
+                ncPorSetorDados.push(ncSetor);
+            });
+
+            // Ajuste de cores baseado no tema (Para legibilidade)
+            const isDark = document.documentElement.classList.contains('dark') && !document.body.classList.contains('pdf-mode');
+            const corTexto = isDark ? '#cbd5e1' : '#475569';
+            const corGrid = isDark ? '#334155' : '#e2e8f0';
+
+            // GRÁFICO 1: Status Geral (Doughnut)
+            const ctxGeral = document.getElementById('chartGeral').getContext('2d');
+            if (chartGeralInstance) chartGeralInstance.destroy();
+            chartGeralInstance = new Chart(ctxGeral, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Avaliados', 'Pontuados', 'Sit. Resolvidas', 'Pendentes'],
+                    datasets: [{
+                        data: [oks, nks, sas, pendentes],
+                        backgroundColor: ['#22c55e', '#ef4444', '#f97316', '#cbd5e1'],
+                        borderWidth: isDark ? 2 : 1,
+                        borderColor: isDark ? '#1e293b' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Desativado para renderização instantânea no PDF
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: corTexto, font: { family: 'sans-serif', size: 12 } } }
+                    }
+                }
+            });
+
+            // GRÁFICO 2: Setores Críticos (Bar)
+            const ctxSetores = document.getElementById('chartSetores').getContext('2d');
+            if (chartSetoresInstance) chartSetoresInstance.destroy();
+            chartSetoresInstance = new Chart(ctxSetores, {
+                type: 'bar',
+                data: {
+                    labels: ncPorSetorLabels,
+                    datasets: [{
+                        label: 'Itens Pontuados',
+                        data: ncPorSetorDados,
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Desativado para renderização instantânea no PDF
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1, color: corTexto }, 
+                            grid: { color: corGrid } 
+                        },
+                        x: { 
+                            ticks: { 
+                                color: corTexto,
+                                maxRotation: 0, 
+                                minRotation: 0, 
+                                font: { size: 9 } 
+                            }, 
+                            grid: { display: false } 
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // NOVO MOTOR DE RENDERIZAÇÃO DA PRÉVIA (FILTRO INTELIGENTE)
+        function renderizarPrevia() {
+            const container = document.getElementById('relatorio-print-container');
+            if (!container) return;
+
+            const inspetor = estadoAtualRonda.inspetor || "Inspetor SESMT";
+            const dataObj = new Date();
+            const dataStr = `${("0"+dataObj.getDate()).slice(-2)}/${("0"+(dataObj.getMonth()+1)).slice(-2)}/${dataObj.getFullYear()}`;
+            const unidade = estadoAtualRonda.unidade || "Não informada";
+            const setores = estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.length > 0 
+                            ? estadoAtualRonda.setoresSelecionados.join(", ") 
+                            : "Não informados";
+
+            let html = `
+                <div class="text-center mb-8 border-b-2 border-slate-800 dark:border-slate-500 pb-4">
+                    <h1 class="text-3xl font-black text-slate-800 dark:text-slate-100">Relatório diario de rondas.</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">AL Indústria - SESMT</p>
+                </div>
+                <div class="mb-6 text-sm text-slate-700 dark:text-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded border border-slate-200 dark:border-slate-700">
+                    <div><b>Unidade:</b> ${unidade}</div>
+                    <div><b>Data:</b> ${dataStr}</div>
+                    <div class="sm:col-span-2"><b>Setores Visitados:</b> ${setores}</div>
+                    <div class="sm:col-span-2"><b>Inspetor:</b> ${inspetor}</div>
+                </div>
+            `;
+
+            if (estadoAtualRonda.focoCritico) {
+                html += `
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-alyellow p-4 mb-8 rounded shadow-sm break-inside-avoid">
+                        <h3 class="font-bold text-yellow-800 dark:text-yellow-400 text-sm uppercase tracking-wider mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Foco Crítico do Dia</h3>
+                        <p class="text-sm text-slate-700 dark:text-slate-200">${estadoAtualRonda.focoCritico}</p>
+                    </div>
+                `;
+            }
+
+            // Captura os gráficos em formato de imagem estática
+            const imgGeral = chartGeralInstance ? chartGeralInstance.toBase64Image() : '';
+            const imgSetores = chartSetoresInstance ? chartSetoresInstance.toBase64Image() : '';
+
+            html += `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8 break-inside-avoid border border-slate-200 dark:border-slate-700 p-4 rounded-lg">
+                    <div class="text-center lg:col-span-1">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Status Global</h3>
+                        ${imgGeral ? `<img src="${imgGeral}" class="max-h-48 mx-auto">` : ''}
+                    </div>
+                    <div class="text-center lg:col-span-2">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Ocorrências por Setor</h3>
+                        ${imgSetores ? `<img src="${imgSetores}" class="max-h-48 mx-auto w-full object-contain">` : ''}
+                    </div>
+                </div>
+            `;
+
+            let htmlPontuados = '';
+            let htmlResolvidos = '';
+            let htmlConformes = '';
+            let countPontuados = 0;
+            let countResolvidos = 0;
+            let countConformes = 0;
+
+            moldeAtual.forEach(secao => {
+                secao.itens.forEach(item => {
+                    const resp = estadoAtualRonda.respostas[item.idItem];
+                    
+                    if (resp && resp.status === 'pontuado') {
+                        countPontuados++;
+                        htmlPontuados += `
+                            <div class="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700 last:border-0 break-inside-avoid">
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${secao.tituloCategoria}</p>
+                                <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">${item.descricao}</p>
+                                ${resp.observacao ? `<div class="text-sm text-slate-600 dark:text-slate-400 mb-1"><b>Desvio / Obs:</b> ${resp.observacao}</div>` : ''}
+                                ${resp.fotoBase64 ? `<div class="mt-3"><img src="${resp.fotoBase64}" class="h-40 rounded object-cover border border-slate-300 dark:border-slate-600 shadow-sm"></div>` : ''}
+                            </div>
+                        `;
+                    } else if (resp && resp.status === 'resolvido') {
+                        countResolvidos++;
+                        htmlResolvidos += `
+                            <div class="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700 last:border-0 break-inside-avoid">
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${secao.tituloCategoria}</p>
+                                <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">${item.descricao}</p>
+                                ${resp.observacao ? `<div class="text-sm text-slate-600 dark:text-slate-400 mb-1"><b>Desvio / Obs:</b> ${resp.observacao}</div>` : ''}
+                                ${resp.solucao ? `<div class="text-sm text-slate-600 dark:text-slate-400 mb-1"><b>Solução Adotada:</b> ${resp.solucao}</div>` : ''}
+                                ${resp.fotoBase64 ? `<div class="mt-3"><img src="${resp.fotoBase64}" class="h-40 rounded object-cover border border-slate-300 dark:border-slate-600 shadow-sm"></div>` : ''}
+                            </div>
+                        `;
+                    } else if (resp && resp.status === 'ok') {
+                        countConformes++;
+                        htmlConformes += `
+                            <div class="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700 last:border-0 break-inside-avoid">
+                                <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${secao.tituloCategoria}</p>
+                                <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">${item.descricao}</p>
+                                <div class="text-xs text-green-600 dark:text-green-500 mb-1"><b>Status:</b> <i class="fa-solid fa-check"></i> Inspecionado e validado (Conforme)</div>
+                                ${resp.fotoBase64 ? `<div class="mt-3"><img src="${resp.fotoBase64}" class="h-40 rounded object-cover border border-slate-300 dark:border-slate-600 shadow-sm"></div>` : ''}
+                            </div>
+                        `;
+                    }
+                });
+
+                const obsArea = estadoAtualRonda.obsAreas[secao.idCategoria];
+                if (obsArea && obsArea.trim() !== '') {
+                    countPontuados++;
+                    htmlPontuados += `
+                        <div class="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700 last:border-0 break-inside-avoid">
+                            <p class="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-widest">${secao.tituloCategoria}</p>
+                            <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">Observação Geral da Área</p>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-1"><b>Relato:</b> ${obsArea}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Estrutura Visual: Itens Pontuados
+            html += `
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-red-600 dark:text-red-400 border-b-2 border-red-200 dark:border-red-800 mb-4 flex items-center gap-2 pb-1">
+                        <i class="fa-solid fa-triangle-exclamation"></i> ITENS PONTUADOS (Aguardando Ação)
+                    </h2>
+                    <div class="pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                        ${countPontuados > 0 ? htmlPontuados : '<p class="text-sm text-slate-600 dark:text-slate-400 italic py-2">Nenhum item pontuado nesta ronda.</p>'}
+                    </div>
+                </div>
+            `;
+
+            // Estrutura Visual: Situações Resolvidas
+            html += `
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-green-600 dark:text-green-400 border-b-2 border-green-200 dark:border-green-800 mb-4 flex items-center gap-2 pb-1">
+                        <i class="fa-solid fa-check-double"></i> SITUAÇÕES RESOLVIDAS
+                    </h2>
+                    <div class="pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                        ${countResolvidos > 0 ? htmlResolvidos : '<p class="text-sm text-slate-600 dark:text-slate-400 italic py-2">Nenhuma.</p>'}
+                    </div>
+                </div>
+            `;
+
+            // Estrutura Visual: Itens Conformes (Trilha de Auditoria com quebra de página)
+            if (countConformes > 0) {
+                html += `
+                    <div class="mb-8" style="page-break-before: always; break-before: page;">
+                        <h2 class="text-lg font-bold text-slate-600 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-700 mb-4 flex items-center gap-2 pb-1 pt-4">
+                            <i class="fa-solid fa-check-circle"></i> ITENS CONFORMES / AVALIADOS (Auditoria de Área)
+                        </h2>
+                        <div class="pl-2 border-l-2 border-slate-200 dark:border-slate-700">
+                            ${htmlConformes}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Assinatura
+            html += `
+                <div class="mt-16 pt-8 text-center break-inside-avoid">
+                    <p class="text-xs text-slate-500 mb-12 uppercase tracking-widest">Relatório de Vistorias de Campo da Segurança do trabalho.</p>
+                    <div class="w-64 mx-auto border-t border-slate-800 dark:border-slate-500 pt-2">
+                        <p class="font-bold text-slate-800 dark:text-slate-200">${inspetor}</p>
+                        <p class="text-xs text-slate-500">SESMT - AL Indústria</p>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // MOTOR PROFISSIONAL DE EXPORTAÇÃO PDF (ATUALIZADO E FORÇADO PARA CLARO)
+        function gerarRelatorioPDF() {
+            mostrarToast("A preparar PDF corporativo... Aguarde um instante.");
+            
+            // Força a atualização da aba Prévia e das cores dos gráficos para o PDF (Branco)
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                atualizarGraficos(); 
+            }
+            
+            renderizarPrevia();
+            const containerPrevia = document.getElementById('relatorio-print-container');
+
+            const dataObj = new Date();
+            const dataStr = `${("0"+dataObj.getDate()).slice(-2)}-${("0"+(dataObj.getMonth()+1)).slice(-2)}-${dataObj.getFullYear()}`;
+            const insp = document.getElementById('input-inspetor').value.replace(/[^a-zA-Z0-9]/g, '_') || "SESMT";
+            const nomeArquivo = `Relatorio_Vistoria_${insp}_${dataStr}.pdf`;
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     nomeArquivo,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
+            };
+
+            setTimeout(() => {
+                html2pdf().set(opt).from(containerPrevia).save().then(() => {
+                    // Retorna para o Modo Escuro após baixar o PDF
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                        atualizarGraficos(); 
+                    }
+                    mostrarToast("Relatório descarregado com sucesso!");
+                });
+            }, 500); // Tempo para as imagens base64 renderizarem corretamente
+        }
+
+        function limparRonda() {
+            if(confirm("Deseja realmente limpar toda a ronda de hoje?")) {
+                localStorage.removeItem('sgi_vistoria_progresso');
+                estadoAtualRonda.focoCritico = "";
+                document.getElementById('input-foco').value = "";
+                bootApp(); 
+                mostrarToast("Ronda limpa com sucesso!");
+            }
+        }
+
+        function gerarResumoEmail() {
+            const inspetor = estadoAtualRonda.inspetor || "Inspetor SESMT";
+            const dataObj = new Date();
+            const dataStr = `${("0"+dataObj.getDate()).slice(-2)}/${("0"+(dataObj.getMonth()+1)).slice(-2)}/${dataObj.getFullYear()}`;
+            const unidade = estadoAtualRonda.unidade || "Não informada";
+            const setores = estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.length > 0 
+                            ? estadoAtualRonda.setoresSelecionados.join(", ") 
+                            : "Não informados";
+            
+            let texto = `*RESUMO DA RONDA SESMT*\nUnidade: ${unidade}\nData: ${dataStr}\nSetores Visitados: ${setores}\nInspetor: ${inspetor}\n\n`;
+            
+            if(estadoAtualRonda.focoCritico) {
+                texto += `*🎯 FOCO DO DIA:* ${estadoAtualRonda.focoCritico}\n\n`;
+            }
+
+            let itensPontuados = "";
+            let itensResolvidos = "";
+            let itensConformes = "";
+
+            moldeAtual.forEach(cat => {
+                cat.itens.forEach(item => {
+                    const resp = estadoAtualRonda.respostas[item.idItem];
+                    if (resp && resp.status === 'pontuado') {
+                        itensPontuados += `❌ [${cat.tituloCategoria}] ${item.descricao}\n   ↳ Obs: ${resp.observacao || 'Sem anotações'}\n\n`;
+                    } else if (resp && resp.status === 'resolvido') {
+                        itensResolvidos += `✅ [${cat.tituloCategoria}] ${item.descricao}\n   ↳ Desvio: ${resp.observacao || 'Não relatado'}\n   ↳ Solução: ${resp.solucao || 'Não relatada'}\n\n`;
+                    } else if (resp && resp.status === 'ok') {
+                        itensConformes += `✔️ [${cat.tituloCategoria}] ${item.descricao}\n   ↳ Status: Inspecionado e validado.\n\n`;
+                    }
+                });
+                
+                const obsArea = estadoAtualRonda.obsAreas[cat.idCategoria];
+                if (obsArea && obsArea.trim() !== "") {
+                    itensPontuados += `📝 [${cat.tituloCategoria}] Observação Geral da Área:\n   ↳ ${obsArea}\n\n`;
+                }
+            });
+
+            texto += `*🚨 ITENS PONTUADOS (Aguardando Ação):*\n`;
+            if (itensPontuados === "") {
+                texto += `Nenhum item pontuado nesta ronda.\n\n`;
+            } else {
+                texto += `${itensPontuados}`;
+            }
+
+            texto += `*✅ SITUAÇÕES RESOLVIDAS:*\n`;
+            if (itensResolvidos === "") {
+                texto += `Nenhuma.\n\n`;
+            } else {
+                texto += `${itensResolvidos}`;
+            }
+
+            texto += `*✔️ ITENS CONFORMES / AVALIADOS (Auditoria de Área):*\n`;
+            if (itensConformes === "") {
+                texto += `Nenhum item marcado como conforme.\n`;
+            } else {
+                texto += `${itensConformes}`;
+            }
+
+            const el = document.createElement('textarea');
+            el.value = texto;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            mostrarToast("Texto copiado para a Área de Transferência!");
+        }
+
+        // -----------------------------------------------------
+        // 8. ABA JSON (MANUAL CONFIG)
+        // -----------------------------------------------------
+        function salvarNovoMoldeJSON() {
+            const raw = document.getElementById('editor-json').value;
+            try {
+                const parsed = JSON.parse(raw);
+                if(Array.isArray(parsed)) {
+                    moldeAtual = parsed;
+                    salvarEAtualizarEstrutura();
+                    mostrarToast("Estrutura atualizada pelo editor manual com sucesso!");
+                } else {
+                    alert("O JSON deve ser um Array [ ... ] válido.");
+                }
+            } catch(e) {
+                alert("Erro de sintaxe no JSON. Verifique as aspas e chaves.");
+            }
+        }
+
+        function restaurarMoldePadrao() {
+            if(confirm("Isto apagará suas personalizações de estrutura (setores e perguntas criadas) e voltará ao padrão de fábrica. Continuar?")) {
+                localStorage.removeItem('sgi_vistoria_molde');
+                bootApp();
+                mostrarToast("Molde padrão restaurado.");
+            }
+        }
+
+        function baixarMoldeJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(moldeAtual, null, 4));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "Molde_Checklist_SESMT.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            mostrarToast("Arquivo JSON baixado!");
+        }
+
+        // NOVO: Função para proteger a área de Importação/Exportação da IA
+        function desbloquearModoOP() {
+            const senha = document.getElementById('senhaOp').value;
+            
+            if (senha === "SESMT2026") {
+                // Esconde a área de senha e força a exibição do Painel
+                document.getElementById('area-desbloqueio-op').style.display = 'none';
+                document.getElementById('area-botoes-op').setAttribute('style', 'display: flex !important;');
+                mostrarToast("Acesso Liberado: Funções de IA habilitadas.");
+            } else {
+                alert("Senha Incorreta! Acesso negado.");
+                document.getElementById('senhaOp').value = ""; // Limpa o campo se errar
+            }
+        }
+
+        function exportarRondaJSON() {
+            const progressoSalvo = localStorage.getItem('sgi_vistoria_progresso');
+            if (!progressoSalvo) {
+                alert("Não há dados de ronda salvos para exportar. Inicie uma vistoria primeiro.");
+                return;
+            }
+
+            // Pega os dados brutos e formata com indentação para a IA ler melhor
+            const parsedData = JSON.parse(progressoSalvo);
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(parsedData, null, 4));
+            
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            const dataObj = new Date();
+            const dataFormatada = `${("0"+dataObj.getDate()).slice(-2)}-${("0"+(dataObj.getMonth()+1)).slice(-2)}-${dataObj.getFullYear()}`;
+            downloadAnchorNode.setAttribute("download", `Ronda_Bruta_${dataFormatada}.json`);
+            
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            mostrarToast("Dados brutos da ronda exportados para integração com IA!");
+        }
+
+        function importarRondaJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const conteudo = e.target.result;
+                    const dadosImportados = JSON.parse(conteudo);
+                    
+                    // Validação de segurança básica para ver se é um JSON do nosso sistema
+                    if (dadosImportados && typeof dadosImportados.respostas === 'object') {
+                        // Sobrescreve o LocalStorage com o arquivo processado pela IA
+                        localStorage.setItem('sgi_vistoria_progresso', JSON.stringify(dadosImportados));
+                        
+                        // O PULO DO GATO: Reinicia o motor do App para atualizar a tela toda na hora
+                        bootApp();
+                        
+                        mostrarToast("Ronda importada e atualizada com sucesso!");
+                    } else {
+                        alert("O arquivo selecionado não parece ser um backup válido ou processado de Ronda.");
+                    }
+                } catch (error) {
+                    alert("Erro de sintaxe no arquivo JSON. Verifique a formatação da IA.");
+                    console.error("Erro ao ler JSON:", error);
+                }
+                
+                // Limpa o valor do input (permite que você suba o mesmo arquivo caso erre)
+                event.target.value = "";
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function mostrarToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 3000);
+        }
+
+    </script>
+</body>
+</html>
