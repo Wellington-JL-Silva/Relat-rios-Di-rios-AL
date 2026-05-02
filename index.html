@@ -217,6 +217,36 @@
                     </button>
                 </div>
 
+                <!-- NOVO BLOCO: CONFIGURAÇÃO DA RONDA -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 no-print transition-colors">
+                    <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-location-dot text-alblue dark:text-blue-400 mr-2"></i> Configuração da Ronda</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="select-unidade" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Unidade</label>
+                            <select id="select-unidade" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-alblue transition-colors">
+                                <option value="" disabled selected>Selecione a Unidade...</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Setores Visitados</label>
+                            <div id="check-setores" class="grid grid-cols-2 sm:grid-cols-3 gap-2 grid-setores">
+                                <!-- Preenchido dinamicamente pelo JS -->
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="nome-inspetor" class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nome do Inspetor</label>
+                            <input type="text" id="nome-inspetor" placeholder="Nome do Inspetor" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded p-3 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:border-alblue transition-colors">
+                        </div>
+
+                        <button id="btn-iniciar-ronda" class="w-full bg-alblue hover:bg-alblue_light dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 mt-2">
+                            <i class="fa-solid fa-play"></i> Salvar Configuração e Iniciar Ronda
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Estatísticas Simples -->
                 <h2 class="text-lg font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-200 dark:border-slate-700 pb-2"><i class="fa-solid fa-chart-simple text-alblue dark:text-blue-400 mr-2"></i> Indicadores da Ronda</h2>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -652,6 +682,11 @@
             atualizarInputsMetadados();
             calcularEstatisticas();
             sincronizarEditorJson();
+            renderSetupRonda(); // NOVO: Monta a tela de configuração inicial
+            
+            // NOVO: Vincula a função ao botão de Iniciar
+            const btnIniciar = document.getElementById('btn-iniciar-ronda');
+            if(btnIniciar) btnIniciar.onclick = iniciarRonda;
         }
 
         function mergeData(estruturaJson, progressoLocal) {
@@ -717,10 +752,92 @@
         function atualizarInputsMetadados() {
             document.getElementById('input-inspetor').value = estadoAtualRonda.inspetor;
             document.getElementById('input-foco').value = estadoAtualRonda.focoCritico;
+            // Sincroniza também o nome na tela de Setup
+            if(document.getElementById('nome-inspetor')) {
+                document.getElementById('nome-inspetor').value = estadoAtualRonda.inspetor;
+            }
         }
 
         function sincronizarEditorJson() {
             document.getElementById('editor-json').value = JSON.stringify(moldeAtual, null, 4);
+        }
+
+        // NOVO: Renderiza as opções da tela de Setup baseado no JSON
+        function renderSetupRonda() {
+            const selectUnidade = document.getElementById('select-unidade');
+            const divSetores = document.getElementById('check-setores');
+            
+            if (!selectUnidade || !divSetores) return;
+
+            // 1. Preenche Unidades
+            selectUnidade.innerHTML = '<option value="" disabled selected>Selecione a Unidade...</option>';
+            mockJsonConfig.unidades.forEach(uni => {
+                const opt = document.createElement('option');
+                opt.value = uni;
+                opt.innerText = uni;
+                selectUnidade.appendChild(opt);
+            });
+            if (estadoAtualRonda.unidade) selectUnidade.value = estadoAtualRonda.unidade;
+
+            // 2. Preenche Setores dinamicamente (Unindo ADM e OP do mockJsonConfig)
+            let htmlSetores = '';
+            const todosSetores = [...mockJsonConfig.setores.administrativos, ...mockJsonConfig.setores.operacionais].sort();
+            
+            todosSetores.forEach(setor => {
+                // Checa se já estava salvo na memória
+                const isChecked = (estadoAtualRonda.setoresSelecionados && estadoAtualRonda.setoresSelecionados.includes(setor)) ? 'checked' : '';
+                
+                htmlSetores += `
+                    <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <input type="checkbox" value="${setor}" class="chk-setor w-4 h-4 text-alblue rounded border-slate-300 focus:ring-alblue" ${isChecked}>
+                        <span class="truncate">${setor}</span>
+                    </label>
+                `;
+            });
+            divSetores.innerHTML = htmlSetores;
+        }
+
+        // NOVO: Valida e Salva os dados do Setup, direcionando para a vistoria
+        function iniciarRonda() {
+            const unidade = document.getElementById('select-unidade').value;
+            const inspetor = document.getElementById('nome-inspetor').value;
+            
+            // Pega todos os checkboxes marcados
+            const checkboxes = document.querySelectorAll('.chk-setor:checked');
+            const setores = Array.from(checkboxes).map(chk => chk.value);
+
+            // Validações Básicas
+            if (!unidade) {
+                alert("Por favor, selecione uma Unidade antes de iniciar.");
+                return;
+            }
+            if (!inspetor || inspetor.trim() === "") {
+                alert("Por favor, informe o Nome do Inspetor.");
+                return;
+            }
+            if (setores.length === 0) {
+                alert("Por favor, selecione pelo menos um Setor Visitado.");
+                return;
+            }
+
+            // Atualiza o estado global
+            estadoAtualRonda.unidade = unidade;
+            estadoAtualRonda.inspetor = inspetor.trim();
+            estadoAtualRonda.setoresSelecionados = setores;
+            
+            // Sincroniza o cabeçalho superior pequeno
+            document.getElementById('input-inspetor').value = estadoAtualRonda.inspetor;
+
+            // Salva tudo no LocalStorage
+            salvarProgresso();
+            
+            mostrarToast("Configuração salva! Iniciando vistoria...");
+            
+            // Avança automaticamente para a aba de checklist
+            mudarAba('checklist');
+            
+            // Atualiza a prévia para já refletir o cabeçalho correto nos PDFs
+            renderizarPrevia();
         }
 
         // -----------------------------------------------------
